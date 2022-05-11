@@ -1,0 +1,226 @@
+swagger: "2.0"
+info:
+  description: "Homefy API"
+  version: "1.0.0"
+  title: "Homefy API"
+  # termsOfService: "http://swagger.io/terms/"
+  contact:
+    email: "dev@homefy.pl"
+  license:
+    name: "Apache 2.0"
+    url: "http://www.apache.org/licenses/LICENSE-2.0.html"
+host: "homefy.pl"
+basePath: "/"
+tags:
+- name: "estate"
+  description: "Operations about real estates"
+- name: "investment"
+  description: "Operations about investments"
+- name: "client"
+  description: "Operations about client"
+schemes:
+- "https"
+- "http"
+paths:
+  /estate/{id}:
+    put:
+      tags:
+      - "estate"
+      summary: "real estate was updated/created/deleted - a graph needs update"
+      consumes:
+      - "application/x-www-form-urlencoded"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "id"
+        in: "path"
+        description: "real estate id"
+        required: true
+        type: "integer"
+        format: "int64"
+      responses:
+        "200":
+          description: "successful operation"
+        "400":
+          description: "invalid id supplied"
+  /investment/{id}:
+    put:
+      tags:
+      - "investment"
+      summary: "investment was updated/created/deleted - a graph needs update"
+      consumes:
+      - "application/x-www-form-urlencoded"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "id"
+        in: "path"
+        description: "investment id"
+        required: true
+        type: "integer"
+        format: "int64"
+      responses:
+        "200":
+          description: "successful operation"
+        "400":
+          description: "invalid id supplied"
+  /client/{id}:
+    put:
+      tags:
+      - "client"
+      summary: "client was updated/created/deleted - a graph needs update"
+      consumes:
+      - "application/x-www-form-urlencoded"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "id"
+        in: "path"
+        description: "client id"
+        required: true
+        type: "integer"
+        format: "int64"
+      responses:
+        "200":
+          description: "successful operation"
+        "400":
+          description: "invalid id supplied"
+  /client/{id}/profiling:
+    post:
+      tags:
+      - "client"
+      summary: "profiling assistant gives a new question id based on previous answers for a given client"
+      consumes:
+      - "application/x-www-form-urlencoded"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "id"
+        in: "path"
+        description: "client id"
+        required: true
+        type: "integer"
+        format: "int64"
+      - in: "body"
+        name: "answers"
+        description: "question_key-answer list, for first request will be empty"
+        required: true
+        schema:
+          $ref: "#/definitions/Answer"
+      responses:
+        "200":
+          description: "Successful, return next question key to ask. May be empty if system has no more questions."
+          schema:
+            type: "object"
+            properties:
+              nextquestion:
+                type: "string"
+                example: "questionAsdf2"
+        "400":
+          description: "invalid id supplied or answers parameter"
+        "404":
+          description: "client not found"
+  /client/{id}/matching-estates:
+    get:
+      tags:
+      - "client"
+      summary: "find matching real estate for a given client"
+      description: ""
+      operationId: "estatematching"
+      consumes:
+      - "application/x-www-form-urlencoded"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "id"
+        in: "path"
+        description: "client id"
+        required: true
+        type: "integer"
+        format: "int64"
+      - in: "body"
+        name: "filters"
+        description: "filter-value filters list"
+        required: false
+        schema:
+          $ref: "#/definitions/Filter"
+      responses:
+        "200":
+          description: "Return array of estate ids with confidence"
+          schema:
+            type: "array"
+            description: "array of estate matching"
+            items:
+              $ref: "#/definitions/EstateMatching"
+        "400":
+          description: "invalid id supplied"
+        "404":
+          description: "client not found"
+  /investment/{id}/heatmaps:
+    get:
+      tags:
+      - "investment"
+      summary: "get all heatmaps for a given investment"
+      description: ""
+      operationId: "heatmaps"
+      consumes:
+      - "application/x-www-form-urlencoded"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "id"
+        in: "path"
+        description: "investment id"
+        required: true
+        type: "integer"
+        format: "int64"
+      responses:
+        "200":
+          description: "successful operation"
+          schema:
+            type: "array"
+            description: "array of heatmaps"
+            items:
+              $ref: "#/definitions/Heatmap"
+        "400":
+          description: "invalid id supplied"
+        "404":
+          description: "investment not found"
+
+definitions:
+  Filter:
+    type: "object"
+    additionalProperties:
+      type: "string"
+    example:
+      filterA: "Kraków"
+      filterB: "123"
+  EstateMatching:
+    type: "object"
+    properties:
+      estateid:
+        type: "integer"
+        format: "int64"
+        description: "real estate id"
+      confidence:
+        type: "number"
+        format: "double"
+        description: "confidence score floating point number between 0 and 1"
+        minimum: 0
+        maximum: 1
+  Heatmap:
+    type: "object"
+    properties:
+      name:
+        type: "string"
+        description: "heatmap name"
+      image:
+        type: "string"
+        description: "base64 encoded image content"
+  Answer:
+    type: "object"
+    additionalProperties:
+      type: "string"
+    example:
+      questionKey1: "Option 1"
+      questionAsdf: "Wsad"
