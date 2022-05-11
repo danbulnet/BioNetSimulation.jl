@@ -101,12 +101,12 @@ paths:
         required: true
         type: "integer"
         format: "int64"
-      - in: "body"
+      - in: "formData"
         name: "answers"
-        description: "question_key-answer list, for first request will be empty"
+        description: "Json encoded string - question key-answer list. \nFor first request value will be empty. \nExample: {\"question1\": \"answer A\", \"question2\": \"answer C\"}"
         required: true
-        schema:
-          $ref: "#/definitions/Answer"
+        allowEmptyValue: true
+        type: string
       responses:
         "200":
           description: "Successful, return next question key to ask. May be empty if system has no more questions."
@@ -138,12 +138,11 @@ paths:
         required: true
         type: "integer"
         format: "int64"
-      - in: "body"
+      - in: "formData"
         name: "filters"
-        description: "filter-value filters list"
+        description: "Json encoded string - filter-value list. \nExample: {\"filterA\": \"value C\", \"FilterB\": \"6\"}"
         required: false
-        schema:
-          $ref: "#/definitions/Filter"
+        type: string
       responses:
         "200":
           description: "Return array of estate ids with confidence"
@@ -188,13 +187,6 @@ paths:
           description: "investment not found"
 
 definitions:
-  Filter:
-    type: "object"
-    additionalProperties:
-      type: "string"
-    example:
-      filterA: "Kraków"
-      filterB: "123"
   EstateMatching:
     type: "object"
     properties:
@@ -217,10 +209,3 @@ definitions:
       image:
         type: "string"
         description: "base64 encoded image content"
-  Answer:
-    type: "object"
-    additionalProperties:
-      type: "string"
-    example:
-      questionKey1: "Option 1"
-      questionAsdf: "Wsad"
