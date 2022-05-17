@@ -64,6 +64,71 @@ paths:
           description: "successful operation"
         "400":
           description: "invalid id supplied"
+  /investment/{id}/heatmaps:
+    get:
+      tags:
+      - "investment"
+      summary: "get list of available heatmaps as list of key - modified timestamp"
+      description: ""
+      operationId: "heatmaps"
+      consumes:
+      - "application/x-www-form-urlencoded"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "id"
+        in: "path"
+        description: "investment id"
+        required: true
+        type: "integer"
+        format: "int64"
+      responses:
+        "200":
+          description: "successful operation"
+          schema:
+            type: "object"
+            properties:
+              key1:
+                type: "integer"
+                example: 1652511201
+              key2:
+                type: "integer"
+                example: 1652511486
+        "400":
+          description: "invalid id supplied"
+        "404":
+          description: "not found"
+  /investment/{id}/heatmap/{key}:
+    get:
+      tags:
+      - "investment"
+      summary: "gets heatmap file by investment id and heatmap key"
+      description: ""
+      consumes:
+      - "application/x-www-form-urlencoded"
+      produces:
+      - "image/jpeg"
+      parameters:
+      - name: "id"
+        in: "path"
+        description: "investment id"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "key"
+        in: "path"
+        description: "heatmap key"
+        required: true
+        type: "string"
+      responses:
+        "200":
+          description: "successful operation - jpg heatmap file"
+          schema:
+            type: "file"
+        "400":
+          description: "invalid arguments"
+        "404":
+          description: "not found"
   /client/{id}:
     put:
       tags:
@@ -155,36 +220,7 @@ paths:
           description: "invalid id supplied"
         "404":
           description: "client not found"
-  /investment/{id}/heatmaps:
-    get:
-      tags:
-      - "investment"
-      summary: "get all heatmaps for a given investment"
-      description: ""
-      operationId: "heatmaps"
-      consumes:
-      - "application/x-www-form-urlencoded"
-      produces:
-      - "application/json"
-      parameters:
-      - name: "id"
-        in: "path"
-        description: "investment id"
-        required: true
-        type: "integer"
-        format: "int64"
-      responses:
-        "200":
-          description: "successful operation"
-          schema:
-            type: "array"
-            description: "array of heatmaps"
-            items:
-              $ref: "#/definitions/Heatmap"
-        "400":
-          description: "invalid id supplied"
-        "404":
-          description: "investment not found"
+
 
 definitions:
   EstateMatching:
@@ -200,12 +236,3 @@ definitions:
         description: "confidence score floating point number between 0 and 1"
         minimum: 0
         maximum: 1
-  Heatmap:
-    type: "object"
-    properties:
-      name:
-        type: "string"
-        description: "heatmap name"
-      image:
-        type: "string"
-        description: "base64 encoded image content"
