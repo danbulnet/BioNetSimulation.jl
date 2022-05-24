@@ -64,7 +64,7 @@ paths:
           description: "successful operation"
         "400":
           description: "invalid id supplied"
-  /investment/{id}/heatmaps:
+  /investment/{id}/heatmap/list:
     get:
       tags:
       - "investment"
