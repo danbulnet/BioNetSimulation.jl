@@ -83,7 +83,7 @@ function db2magdrs(
     tablesprim = filter(x -> isempty(tabsfkeys[x]), tables)
 
     for table in tablesprim
-        addsensins!(graph, conn, table)
+        addsensins!(graph, conn, table; rowlimit=rowlimit)
     end
     tablesprim = Set(tablesprim)
     tablestodo = setdiff(tablestodo, tablesprim)
@@ -100,11 +100,11 @@ function db2magdrs(
                 end
             end
             if todo
-                addsensins!(graph, conn, table)
+                addsensins!(graph, conn, table; rowlimit=rowlimit)
                 # if length(tablefilter) > 1
                     # addneurons!(graph, conn, table, tabsfkeystabs[table])
                 # end
-                addneurons!(graph, conn, table, tabsfkeystabs[table]; rowlimit)
+                addneurons!(graph, conn, table, tabsfkeystabs[table]; rowlimit=rowlimit)
                 pop!(tablestodo, table)
                 push!(tablesdone, table)
             end
@@ -116,7 +116,7 @@ function db2magdrs(
     return graph
 end
 
-function addsensins!(graph::AGDSSimple.Graph, conn, table::Symbol)
+function addsensins!(graph::AGDSSimple.Graph, conn, table::Symbol; rowlimit::Int=0)
     println("adding sensins for ", table)
     result = execute(conn, @rowsquery(table))
     rows = columntable(result)
@@ -132,7 +132,8 @@ function addsensins!(graph::AGDSSimple.Graph, conn, table::Symbol)
         end
     end
 
-    for i = 1:length(rows[1])
+    nrows = rowlimit > 0 ? min(rowlimit, length(rows[1])) : length(rows[1])
+    for i = 1:nrows
         neuron = AGDSSimple.NeuronSimple("$(table)_$(rows[Symbol(columns[1])][i])", string(table))
         push!(graph.neurons[Symbol(table)], neuron)
         for column in columns
