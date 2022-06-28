@@ -8,8 +8,8 @@ using LinearAlgebra: norm
 # using WGLMakie
 # using JSServe
 
-import BioNet: ASAGraph, ASACGraph, DatabaseParser, AGDSSimple, Simulation
-import BioNet.ASAGraph: AbstractSensor, id
+import BioNet: ASACGraph, DatabaseParser, AGDSSimple, Simulation
+import BioNet.ASAGraph
 import BioNet.ASACGraph: AbstractSensor, id
 
 function graphsim(
@@ -17,7 +17,7 @@ function graphsim(
     camera3d=true, ssao=false,
     neuronsize=Point3(1.0, 0.7, 0.1), neurongap=2.0,
     neuroncolorstart=HSV(70, 0.38, 1), neuroncolorstop=HSV(-180, 0.38, 1),
-    paddingcoeff=1.25,
+    paddingcoeff=1.0,
     connectorcolorstart=colorant"honeydew4", connectorcolorend=colorant"honeydew2",
     tablefilter=String[]
 )
@@ -54,14 +54,8 @@ function graphsim(
         sensins[name] = renderasagraph!(scenes[name], Point(0, 0, 0), graph)
         graphwidth = sensins[name][:size][1] + 1.25
         totalwidth += graphwidth
-        # origin = Point(
-        #     origin[1] + graphwidth,
-        #     origin[2],
-        #     origin[3]
-        # )
     end
 
-    # scalefactor = log2(totalwidth / 18)
     rclusters = Float64[]
     neuronpositions = Vector{Vector{Point3}}()
     for neurons in values(magds.neurons)
@@ -72,7 +66,6 @@ function graphsim(
         push!(neuronpositions, positions)
     end
     
-    # r = circlel2r(totalwidth * scalefactor)
     r = paddingcoeff * maximum(rclusters)
     clusterorigins = clusterpositions(r, rclusters)
     clustercolors = Colors.range(
@@ -95,13 +88,13 @@ function graphsim(
         end
     end
 
-    scalefactor = paddingcoeff * circler2l(2r) / totalwidth
     originx = 0
     for (name, sensin) in sensins
         graphwidth = sensin[:size][1]
         originx += graphwidth
-        x, y, α = circlegeometry(originx * scalefactor, totalwidth * scalefactor)
-        rotate!(scenes[name], Vec3f(0, 0, 1), α - π / 2 - 0.02 * graphwidth)
+        x, y, α = circlegeometry(2originx, 2totalwidth)
+        angle = α - π / (2 - 2(graphwidth / totalwidth)) - 2(graphwidth / totalwidth)
+        rotate!(scenes[name], Vec3f(0, 0, 1), angle)
         translate!(scenes[name], Vec3f(x, y, 0))
         originx += 1.25
     end
