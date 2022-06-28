@@ -19,7 +19,7 @@ function graphsim(
     neuroncolorstart=HSV(70, 0.38, 1), neuroncolorstop=HSV(-180, 0.38, 1),
     paddingcoeff=1.0,
     connectorcolorstart=colorant"honeydew4", connectorcolorend=colorant"honeydew2",
-    tablefilter=String[]
+    tablefilter=String[], rowlimit::Int=0
 )
     # set_theme!(resolution=(2500, 1500))
     # set_theme!(theme_black(), resolution=(3840, 2160))

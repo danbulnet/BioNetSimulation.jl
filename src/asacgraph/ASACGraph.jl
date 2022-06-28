@@ -1,6 +1,7 @@
 module ASACGraph
 
 using DataStructures
+import Base: keytype, insert!, range
 
 include("Node.jl")
 
@@ -39,6 +40,13 @@ end
 
 function range(graph::Graph{Key})::Float64 where Key <: String 
     graph.elements
+end
+
+function range(graph::Graph{Key})::Float64 where Key <: Dates.DateTime 
+    if !isnothing(graph.minkey) && !isnothing(graph.maxkey)
+        return Dates.value(graph.maxkey) - Dates.value(graph.minkey)
+    end
+    0
 end
 
 function search(graph::Graph{Key}, key::Key)::Opt{Element{Key}} where Key
@@ -238,7 +246,7 @@ function elements(graph::Graph{Key})::Vector{Element{Key}} where Key
     elements = Vector{Element{Key}}()
     push!(elements, element)
     while !isnothing(element.next)
-        element = element.next
+        element = element.next.element
         push!(elements, element)
     end
     elements

@@ -4,7 +4,7 @@ export db2magdrs, db2magdrs_old
 
 using LibPQ, Tables
 using ..AGDSSimple
-using ..ASAGraph
+using ..ASACGraph
 using ..Common
 
 const pkquery = """
@@ -46,6 +46,7 @@ function db2magdrs(
     host::String = "localhost",
     port::String = "5432",
     tablefilter::Vector{String} = String[],
+    rowlimit::Int=0
 )::AGDSSimple.Graph
     conn = LibPQ.Connection("host=$host port=$port dbname=$dbname user=$user password=$password")
 
@@ -103,7 +104,7 @@ function db2magdrs(
                 # if length(tablefilter) > 1
                     # addneurons!(graph, conn, table, tabsfkeystabs[table])
                 # end
-                addneurons!(graph, conn, table, tabsfkeystabs[table])
+                addneurons!(graph, conn, table, tabsfkeystabs[table]; rowlimit)
                 pop!(tablestodo, table)
                 push!(tablesdone, table)
             end
@@ -127,37 +128,31 @@ function addsensins!(graph::AGDSSimple.Graph, conn, table::Symbol)
     for (colindex, column) in enumerate(columns)
         column = Symbol(column)
         if !(haskey(graph.sensors, column))
-            graph.sensors[column] = ASAGraph.Graph{columntypes[colindex]}(string(column), ordinal) # TODO: datatype
+            graph.sensors[column] = ASACGraph.Graph{columntypes[colindex]}(string(column), ordinal) # TODO: datatype
         end
     end
 
     for i = 1:length(rows[1])
-        # if i == 1 || i % 1000 == 0 || i == length(rows[1])
-        #     print(i, " ")
-        # end
         neuron = AGDSSimple.NeuronSimple("$(table)_$(rows[Symbol(columns[1])][i])", string(table))
         push!(graph.neurons[Symbol(table)], neuron)
         for column in columns
             value = rows[Symbol(column)][i]
             if typeof(value) != Missing
-                treekeystype = ASAGraph.keytype(graph.sensors[Symbol(column)])
-
                 sensor = insert!(graph.sensors[Symbol(column)], rows[Symbol(column)][i])
-
                 AGDSSimple.connect!(graph, :sensor_neuron, sensor, neuron)
             end
         end
     end
-    # println()
 end
 
-function addneurons!(graph::AGDSSimple.Graph, conn, table::Symbol, fkeys)
+function addneurons!(graph::AGDSSimple.Graph, conn, table::Symbol, fkeys; rowlimit::Int=0)
     println("adding neurons for ", table)
     result = execute(conn, @rowsquery(table))
     rows = columntable(result)
     columns = LibPQ.column_names(result)
 
-    for i = 1:length(rows[1])
+    nrows = rowlimit > 0 ? min(rowlimit, length(rows[1])) : length(rows[1])
+    for i = 1:nrows
         # if i == 1 || i % 1000 == 0 || i == length(rows[1])
         #     print(i, " ")
         # end
@@ -241,7 +236,7 @@ function db2magdrs_old(
         for (colindex, column) in enumerate(columns)
             column = Symbol(column)
             if !(haskey(graph.sensors, column)) && !(haskey(fkeys, column))
-                graph.sensors[column] = ASAGraph.Graph{columntypes[colindex]}(string(column), ordinal) # TODO: datatype
+                graph.sensors[column] = ASACGraph.Graph{columntypes[colindex]}(string(column), ordinal) # TODO: datatype
             end
         end
 
@@ -254,7 +249,7 @@ function db2magdrs_old(
             for (colindex, column) in enumerate(columns)
                 value = rows[Symbol(column)][i]
                 if typeof(value) != Missing && !(haskey(fkeys, column))
-                    treekeystype = ASAGraph.keytype(graph.sensors[Symbol(column)])
+                    treekeystype = ASACGraph.keytype(graph.sensors[Symbol(column)])
                     # value = if treekeystype == String
                     #     string(treekeystype, rows[Symbol(column)][i])
                     # else
