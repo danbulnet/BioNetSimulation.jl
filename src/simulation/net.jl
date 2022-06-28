@@ -42,7 +42,10 @@ function graphsim(
     scenes = Dict{Symbol, Scene}()
     
     sensins = OrderedDict{Symbol, Dict}()
-    magds = DatabaseParser.db2magdrs(database, username, password; port=port, tablefilter=tablefilter)
+    magds = DatabaseParser.db2magdrs(
+        database, username, password;
+        port=port, tablefilter=tablefilter, rowlimit=rowlimit
+    )
     # origin = Point(0, 0, 0)
     totalwidth = 0.0
     for (i, (name, graph)) in enumerate(magds.sensors)
