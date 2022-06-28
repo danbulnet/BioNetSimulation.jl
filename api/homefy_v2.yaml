@@ -150,11 +150,11 @@ paths:
           description: "successful operation"
         "400":
           description: "invalid id supplied"
-  /client/{id}/profiling:
-    post:
+  /client/{id}/assistant/next-question:
+    get:
       tags:
       - "client"
-      summary: "profiling assistant gives a new question id based on previous answers for a given client"
+      summary: "Returns the assistant's next question"
       consumes:
       - "application/x-www-form-urlencoded"
       produces:
@@ -166,12 +166,6 @@ paths:
         required: true
         type: "integer"
         format: "int64"
-      - in: "formData"
-        name: "answers"
-        description: "Json encoded string - question key-answer list. \nFor first request value will be empty. \nExample: {\"question1\": \"answer A\", \"question2\": \"answer C\"}"
-        required: true
-        allowEmptyValue: true
-        type: string
       responses:
         "200":
           description: "Successful, return next question key to ask. May be empty if system has no more questions."
@@ -203,11 +197,6 @@ paths:
         required: true
         type: "integer"
         format: "int64"
-      - in: "formData"
-        name: "filters"
-        description: "Json encoded string - filter-value list. \nExample: {\"filterA\": \"value C\", \"FilterB\": \"6\"}"
-        required: false
-        type: string
       responses:
         "200":
           description: "Return array of estate ids with confidence"
