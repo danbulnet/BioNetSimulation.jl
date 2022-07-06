@@ -14,144 +14,148 @@ import BioNet.ASACGraph: AbstractSensor, id
 
 function graphsim(
     database, username, password, port="5432";
+    resolution=(3700, 2000),
     camera3d=true, ssao=false,
     neuronsize=Point3(1.0, 0.7, 0.1), neurongap=2.0,
     neuroncolorstart=HSV(70, 0.38, 1), neuroncolorstop=HSV(-180, 0.38, 1),
-    paddingcoeff=1.0,
+    toggleheight=25, paddingcoeff=1.28, 
     connectorcolorstart=colorant"honeydew4", connectorcolorend=colorant"honeydew2",
-    tablefilter=String[], rowlimit::Int=0
+    tablefilter=String[], rowlimit::Int=0,
+    sensorfilter::Set{Symbol}=Set(),
 )
-    # set_theme!(resolution=(2500, 1500))
-    # set_theme!(theme_black(), resolution=(3840, 2160))
-    set_theme!(theme_black(), resolution=(3500, 2000))
+    set_theme!(theme_black(), resolution=resolution)
     GLMakie.enable_SSAO[] = ssao
 
-    pl = PointLight(Point3f(0, 0, 15), RGBf(1.0, 0.98, 0.94))
-    al = AmbientLight(RGBf(0.58, 0.58, 0.58))
-
-    # screen = GLMakie.global_gl_screen()
-
-    parentscene = Scene(
-        clear=true,
-        lights=[al],
-        backgroundcolor=:black,
-        # ssao = Makie.SSAO(radius=250.0, blur=2, bias=1),
-        # lightposition = Vec3f(0, 0, 15),
-        shininess=256f0,
-    )
-    scenes = Dict{Symbol, Scene}()
+    figure, parentscene, scenes, camera = createscenes(resolution, camera3d)
     
-    sensins = OrderedDict{Symbol, Dict}()
     magds = DatabaseParser.db2magdrs(
         database, username, password;
         port=port, tablefilter=tablefilter, rowlimit=rowlimit
     )
-    # origin = Point(0, 0, 0)
+    sensorsnames = sort(map(first, collect(magds.sensors)))
+    sensors, totalwidth = rendersensors(magds, sensorfilter, parentscene, scenes)
+
+    r, neurons = renderneurons(
+        magds, parentscene, scenes, neuronsize, neurongap, paddingcoeff,
+        neuroncolorstart, neuroncolorstop
+    )
+
+    r2l = circler2l(r * √paddingcoeff)
+    maxwidth = max(totalwidth, r2l)
+    rdiff = r2l - totalwidth
+    sensorpadding = rdiff > 0 ? rdiff / length(sensors) : 0
+    transformsensors(sensors, sensorpadding, maxwidth, scenes)
+
+    conncections = connecgraph(
+        magds, scenes, neurons, sensors, sensorfilter, connectorcolorstart, connectorcolorend
+    )
+
+    toggles = sensortoggles(figure, resolution, sensorsnames, sensorfilter, toggleheight)
+    rerenderbutton = toggles[:rerenderbutton]
+    restorebutton = toggles[:restorebutton]
+    on(rerenderbutton.clicks) do _
+        selectedtoggles = activetoggles(toggles)
+    end
+    on(restorebutton.clicks; update=true) do _
+        println("restorebutton.clicks")
+        # delete!(first(toggles[:toggles]))
+        # for sensorname in keys(sensors)
+        #     delete!(figure, sensors[sensorname][:label][:node])
+        # end
+        restoretoggles(toggles, sensorfilter)
+        # display(figure)
+    end
+
+    println(activetoggles(toggles))
+
+    center!(parentscene.scene)
+    
+    figure
+end
+
+function rendersensors(magds, sensorfilter, parentscene, scenes)
+    sensors = OrderedDict{Symbol, Dict}()
     totalwidth = 0.0
-    for (i, (name, graph)) in enumerate(magds.sensors)
+    for (name, graph) in magds.sensors
         if isnothing(graph.minkey)
             println("$name is empty, skipping")
             continue
         end
-        scenes[name] = Scene(parentscene, camera=parentscene.camera)
-        sensins[name] = renderasagraph!(scenes[name], Point(0, 0, 0), graph)
-        graphwidth = sensins[name][:size][1] + 1.25
+        scenes[name] = Scene(parentscene.scene, camera=parentscene.scene.camera)
+        if !isempty(sensorfilter) && !(name in sensorfilter)
+            println("sensor $name is not included in sensorfilter, skipping")
+            continue
+        else
+            sensors[name] = renderasagraph!(scenes[name], Point(0, 0, 0), graph)
+        end
+        graphwidth = sensors[name][:size][1] + 1.25
         totalwidth += graphwidth
     end
+    sensors, totalwidth
+end
 
-    rclusters = Float64[]
-    neuronpositions = Vector{Vector{Point3}}()
-    for neurons in values(magds.neurons)
-        positions, rcluster = neuronposition(
-            Point(0, 0, 0), length(neurons), neuronsize, neurongap
-        )
-        push!(rclusters, rcluster)
-        push!(neuronpositions, positions)
-    end
-    
-    r = paddingcoeff * maximum(rclusters)
-    clusterorigins = clusterpositions(r, rclusters)
-    clustercolors = Colors.range(
-        neuroncolorstart, stop=neuroncolorstop, length=length(rclusters) + 1
-    )
-    neurons = Dict{Symbol, Dict{Symbol, Dict}}()
-    for (i, (cname, currentneurons)) in magds.neurons |> enumerate
-        scenes[cname] = Scene(parentscene, camera=parentscene.camera)
-        neurons[cname] = Dict{Symbol, Dict}()
-        sign = i % 2 == 0 ? 1 : -1
-        clusterorigins[i] = Point(clusterorigins[i][1], clusterorigins[i][2], 1)
-        for (j, neuron) in enumerate(currentneurons)
-            neurons[cname][Symbol(neuron.name)] = renderneuron(
-                scenes[cname], 
-                clusterorigins[i] + neuronpositions[i][j], 
-                clustercolors[i], 
-                neuron.activation;
-                text=neuron.name
-            )
-        end
-    end
-
+function transformsensors(sensors, sensorpadding, maxwidth, scenes)
     originx = 0
-    for (name, sensin) in sensins
-        graphwidth = sensin[:size][1]
-        originx += graphwidth
-        x, y, α = circlegeometry(2originx, 2totalwidth)
-        angle = α - π / (2 - 2(graphwidth / totalwidth)) - 2(graphwidth / totalwidth)
+    for (name, sensor) in sensors
+        graphwidth = sensor[:size][1]
+        originx += graphwidth + sensorpadding
+        x, y, α = circlegeometry(2originx, 2maxwidth)
+        angle = α - π / (2 - 2(graphwidth / maxwidth)) - 2(graphwidth / maxwidth)
         rotate!(scenes[name], Vec3f(0, 0, 1), angle)
         translate!(scenes[name], Vec3f(x, y, 0))
         originx += 1.25
     end
+end
 
-    for (cname, currentneurons) in magds.neurons
-        for neuron in currentneurons
-            _sourcecluster, sourceid = AGDSSimple.id(neuron)
-            sourceneuron = neurons[cname][sourceid]
-            sourceneurongeometry = meshgeometry(sourceneuron[:neuron])
-            sourceneuroncenter = sourceneurongeometry[:center]
-            for connection in neuron.out
-                to = connection.to
-                if to isa AbstractSensor
-                    asagraph, targetvalue = id(to)
-                    element = sensins[Symbol(asagraph)][:elements][Symbol(targetvalue)]
-                    secondconnector = element[:connectors][:bottom][1]
-                    firstconnector = determineconnector(
-                        sourceneuron, sourceneuroncenter,
-                        meshgeometry(secondconnector)[:center]
-                    )
-                    line, texts = connectneuronelement!(
-                        scenes[cname], firstconnector,
-                        scenes[asagraph], secondconnector, 1.0;
-                        colorstart=connectorcolorstart, colorend=connectorcolorend,
-                        transparent=true
-                    )
-                elseif to isa AGDSSimple.AbstractNeuron
-                    targetcluster, targetneuronid = AGDSSimple.id(to)
-                    targetneuron = neurons[targetcluster][targetneuronid]
-                    targetneurongeometry = meshgeometry(targetneuron[:neuron])
-                    targetneuroncenter = targetneurongeometry[:center]
-                    firstconnector = determineconnector(
-                        sourceneuron, sourceneuroncenter, targetneuroncenter
-                    )
-                    secondconnector = determineconnector(
-                        targetneuron, targetneuroncenter, sourceneuroncenter
-                    )
-                    line, texts = connect2elements!(
-                        scenes[cname], firstconnector, secondconnector, 1.0;
-                        colorstart=connectorcolorstart, colorend=connectorcolorend,
-                        linewidth=0.38, transparent=true
-                    )
-                end
-            end
-        end
+function sensortoggles(fig, resolution, sensornames, sensorfilter, toggleheight)
+    featuretoggles = []
+    featurelabels = []
+    for name in sensornames
+        active = name in sensorfilter
+        push!(featuretoggles, Toggle(
+            fig, active=active, height=toggleheight, width=2toggleheight
+        ))
+        push!(featurelabels, Label(
+            fig, string(name), height=toggleheight, textsize=(0.8toggleheight - 2)
+        ))
+    end
+    rerenderbutton = Button(
+        fig, strokewidth=3,
+        label="rerender", textsize=0.8toggleheight, 
+        labelcolor=:grey12, labelcolor_hover=:grey12, labelcolor_active=:grey20,
+        buttoncolor=:springgreen3, buttoncolor_hover=:springgreen2, 
+        buttoncolor_active=:springgreen1,
+        cornerradius=8, font="Consolas"
+    )
+    push!(featuretoggles, rerenderbutton)
+
+    restorebutton = Button(
+        fig, strokewidth=3, 
+        label="restore", textsize=0.8toggleheight, 
+        labelcolor=:grey12, labelcolor_hover=:grey12, labelcolor_active=:grey20,
+        buttoncolor=:ivory3, buttoncolor_hover=:ivory2, buttoncolor_active=:ivory1,
+        cornerradius=8, font="Consolas"
+    )
+    push!(featurelabels, restorebutton)
+
+    togglelen = length(featuretoggles)
+    toggles4row = resolution[2] ÷ (2 * first(featuretoggles).height.val) - 2
+    rows4toggle = ceil(Int, togglelen / toggles4row)
+
+    for colindex in 1:(rows4toggle)
+        startindex = 1 + toggles4row * (colindex - 1)
+        endindex = min(startindex + toggles4row - 1, togglelen)
+        fig[1, colindex + 1] = grid!(hcat(
+            featuretoggles[startindex:endindex], featurelabels[startindex:endindex]
+        ), tellheight = false)
     end
 
-    camera = if camera3d cam3d!(parentscene) else cam2d!(parentscene) end
-    center!(parentscene)
-    camera.attributes.reset[] = Keyboard.m
-    # camc = cameracontrols(parentscene)
-    # update_cam!(parentscene, camc, Vec3f(0, 5, 5), Vec3f(0.0, 0, 0))
-    
-    parentscene
+    return Dict(
+        :toggles => featuretoggles[1:end - 1],
+        :labels => featurelabels[1: end - 1],
+        :rerenderbutton => rerenderbutton,
+        :restorebutton => restorebutton,
+    )
 end
 
 function clusterpositions(r::Number, rclusters::Vector{Float64})
@@ -169,4 +173,153 @@ function clusterpositions(r::Number, rclusters::Vector{Float64})
         push!(points3d, Point(last(points2d)..., 0))
     end
     points3d
+end
+
+function renderneurons(
+    magds, parentscene, scenes, neuronsize, neurongap, paddingcoeff,
+    neuroncolorstart, neuroncolorstop
+)
+    rclusters = Float64[]
+    neuronpositions = Vector{Vector{Point3}}()
+    for neurons in values(magds.neurons)
+        positions, rcluster = neuronposition(
+            Point(0, 0, 0), length(neurons), neuronsize, neurongap
+        )
+        push!(rclusters, rcluster)
+        push!(neuronpositions, positions)
+    end
+    
+    r = paddingcoeff * maximum(rclusters)
+    clusterorigins = clusterpositions(r, rclusters)
+    clustercolors = Colors.range(
+        neuroncolorstart, stop=neuroncolorstop, length=length(rclusters) + 1
+    )
+    neurons = Dict{Symbol, Dict{Symbol, Dict}}()
+    for (i, (cname, currentneurons)) in magds.neurons |> enumerate
+        scenes[cname] = Scene(parentscene.scene, camera=parentscene.scene.camera)
+        neurons[cname] = Dict{Symbol, Dict}()
+        sign = i % 2 == 0 ? 1 : -1
+        clusterorigins[i] = Point(clusterorigins[i][1], clusterorigins[i][2], 1)
+        for (j, neuron) in enumerate(currentneurons)
+            neurons[cname][Symbol(neuron.name)] = renderneuron(
+                scenes[cname], 
+                clusterorigins[i] + neuronpositions[i][j], 
+                clustercolors[i], 
+                neuron.activation;
+                text=neuron.name
+            )
+        end
+    end
+
+    r, neurons
+end
+
+function createscenes(resolution, camera3d)
+    figure = Figure()
+    rowsize!(figure.layout, 1, Fixed(resolution[2]))
+
+    # pl = PointLight(Point3f(0, 0, 15), RGBf(1.0, 0.98, 0.94))
+    al = AmbientLight(RGBf(0.58, 0.58, 0.58))
+
+    parentscene = LScene(
+        figure[:, 1],
+        show_axis=false,
+        scenekw = (
+            clear=true,
+            lights=[al],
+            backgroundcolor=:black,
+            # ssao = Makie.SSAO(radius=250.0, blur=2, bias=1),
+            # lightposition = Vec3f(0, 0, 15),
+            shininess=256f0
+        )
+    )
+    scenes = Dict{Symbol, Scene}()
+
+    camera = if camera3d 
+        camera = cam3d!(parentscene.scene)
+        camera.attributes.reset[] = Keyboard.m
+        camera
+    else 
+        cam2d!(parentscene.scene)
+    end
+    # camc = cameracontrols(parentscene.scene)
+    # update_cam!(parentscene.scene, camc, Vec3f(0, 5, 5), Vec3f(0.0, 0, 0))
+
+    figure, parentscene, scenes, camera
+end
+
+function connecgraph(
+    magds, scenes, neurons, sensors, sensorfilter, 
+    connectorcolorstart, connectorcolorend;
+    linewidth=0.38
+)
+    conncections = Dict{Symbol, Dict}()
+    for (cname, currentneurons) in magds.neurons
+        for neuron in currentneurons
+            _sourcecluster, sourceid = AGDSSimple.id(neuron)
+            sourceneuron = neurons[cname][sourceid]
+            sourceneurongeometry = meshgeometry(sourceneuron[:neuron])
+            sourceneuroncenter = sourceneurongeometry[:center]
+            for connection in neuron.out
+                to = connection.to
+                if to isa AbstractSensor
+                    asagraph, targetvalue = id(to)
+                    if !isempty(sensorfilter) && !(asagraph in sensorfilter)
+                        continue
+                    end
+                    element = sensors[Symbol(asagraph)][:elements][Symbol(targetvalue)]
+                    secondconnector = element[:connectors][:bottom][1]
+                    firstconnector = determineconnector(
+                        sourceneuron, sourceneuroncenter,
+                        meshgeometry(secondconnector)[:center]
+                    )
+                    line, texts = connectneuronelement!(
+                        scenes[cname], firstconnector,
+                        scenes[asagraph], secondconnector, 1.0;
+                        colorstart=connectorcolorstart, colorend=connectorcolorend,
+                        linewidth=linewidth
+                    )
+                    connectionname = Symbol("$(sourceid)_$(asagraph)_$targetvalue")
+                    conncections[connectionname] = Dict(:line => line, :texts => texts)
+                elseif to isa AGDSSimple.AbstractNeuron
+                    targetcluster, targetneuronid = AGDSSimple.id(to)
+                    targetneuron = neurons[targetcluster][targetneuronid]
+                    targetneurongeometry = meshgeometry(targetneuron[:neuron])
+                    targetneuroncenter = targetneurongeometry[:center]
+                    firstconnector = determineconnector(
+                        sourceneuron, sourceneuroncenter, targetneuroncenter
+                    )
+                    secondconnector = determineconnector(
+                        targetneuron, targetneuroncenter, sourceneuroncenter
+                    )
+                    line, texts = connect2elements!(
+                        scenes[cname], firstconnector, secondconnector, 1.0;
+                        colorstart=connectorcolorstart, colorend=connectorcolorend,
+                        linewidth=linewidth
+                    )
+                    connectionname = Symbol("$(sourceid)_$(targetneuronid)")
+                    conncections[connectionname] = Dict(:line => line, :texts => texts)
+                end
+            end
+        end
+    end
+    conncections
+end
+
+function activetoggles(toggles)
+    ret = Symbol[]
+    labels = toggles[:labels]
+    for (i, toggle) in enumerate(toggles[:toggles])
+        if toggle.active.val
+            push!(ret, Symbol(labels[i].text.val))
+        end
+    end
+    ret
+end
+
+function restoretoggles(toggles, sensorfilter)
+    labels = toggles[:labels]
+    for (i, toggle) in enumerate(toggles[:toggles])
+        toggle.active[] = labels[i] in sensorfilter
+    end
 end

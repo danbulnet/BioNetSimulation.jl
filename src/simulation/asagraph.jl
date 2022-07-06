@@ -5,7 +5,6 @@ using Decimals: Decimal
 import Makie.Mesh
 
 using BioNet.Simulation
-import BioNet.ASAGraph: nodelevels as asanodelevels, elements as asaelements
 import BioNet.ASACGraph: nodelevels as asanodelevels, elements as asaelements
 
 function renderasagraph!(
@@ -79,7 +78,7 @@ function renderasagraph!(
             renderednodes[Symbol("n$(level)p$inode")] = rendernode(
                 scene, nodeorigin, nodesize, nodecolors[level], elementgap;
                 transparent=false,
-                text="$level.$inode", textcolor=nodetextcolor, textsize=nodetextsize,
+                text="$(node.subtreesize)", textcolor=nodetextcolor, textsize=nodetextsize,
                 wire=nodewire, nodewirecolor=wirecolor
             )
 

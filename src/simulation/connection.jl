@@ -4,7 +4,6 @@ import Makie.Mesh
 
 using BioNet.Simulation
 import BioNet.ASAGraph
-import BioNet.ASAGraph: -
 import BioNet.ASACGraph
 import BioNet.ASACGraph: -
 

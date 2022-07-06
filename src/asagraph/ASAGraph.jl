@@ -433,10 +433,10 @@ function medianel(graph::Graph{Key})::Key where Key
         end
         if left <= right
             left += firstel.counter
-            firstel = firstel.next.element
+            firstel = firstel.next
         else
             right += secondel.counter
-            secondel = secondel.prev.element
+            secondel = secondel.prev
         end
     end
 end

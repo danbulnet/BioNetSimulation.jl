@@ -13,8 +13,8 @@ mutable struct Element{Key} <: AbstractSensor
     state::NeuronState
     activation::Float64
 
-    in::Vector{Connection}
-    out::Vector{Connection}
+    in::Vector{ConnectionSimple}
+    out::Vector{ConnectionSimple}
 
     next::Opt{
         NamedTuple{
@@ -38,8 +38,8 @@ mutable struct Element{Key} <: AbstractSensor
             parent,
             active,
             0.0,
-            Vector{Connection}(),
-            Vector{Connection}(),
+            Vector{ConnectionSimple}(),
+            Vector{ConnectionSimple}(),
             nothing,
             nothing
         )
@@ -127,7 +127,7 @@ function activate!(
         element.state = inactive
     end
 
-    outconns = Set{Connection}()
+    outconns = Set{ConnectionSimple}()
     outconns = union(outconns, element.out)
 
     if (datatype(element) == numerical || datatype(element) == ordinal) && !neuronmode
