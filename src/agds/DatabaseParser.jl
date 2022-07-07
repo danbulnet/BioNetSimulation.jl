@@ -3,6 +3,8 @@ module DatabaseParser
 export db2magdrs, db2magdrs_old
 
 using LibPQ, Tables
+import Dates
+using DataFrames
 using ..AGDSSimple
 using ..ASACGraph
 using ..Common
@@ -37,6 +39,52 @@ end
 
 macro rowsquery(table)
     :(string("SELECT * FROM ",  $(esc(table)), ";"))
+end
+
+function df2magdrs(dfs::Dict{Symbol, DataFrame}; rowlimit::Int=0)::AGDSSimple.Graph
+    graph = AGDSSimple.Graph()
+
+    for (dfname, df) in dfs
+        rows = collect(eachrow(df))
+        columntypes = eltype.(collect.(skipmissing.(eachcol(df))))
+        columns = Symbol.(names(df))
+    
+        graph.neurons[dfname] = Set{NeuronSimple}()
+
+        for (colindex, column) in enumerate(columns)
+            if !(haskey(graph.sensors, column))
+                coltype = columntypes[colindex]
+                if coltype <: Number
+                    datatype = numerical
+                elseif coltype <: AbstractString
+                    datatype = categorical
+                    coltype = String
+                elseif coltype <: <: Dates.DateTime 
+                    datatype = ordinal
+                end
+                graph.sensors[column] = ASACGraph.Graph{coltype}(string(column), datatype)
+            end
+        end
+
+        nrows = rowlimit > 0 ? min(rowlimit, length(rows)) : length(rows)
+        for i = 1:nrows
+            neuron = AGDSSimple.NeuronSimple("$(dfname)_$i", string(dfname))
+            push!(graph.neurons[Symbol(dfname)], neuron)
+            for (colindex, column) in enumerate(columns)
+                value = if columntypes[colindex] <: AbstractString 
+                    string(rows[i][column])
+                else 
+                    rows[i][column]
+                end
+                if !ismissing(value)
+                    sensor = insert!(graph.sensors[column], value)
+                    AGDSSimple.connect!(graph, :sensor_neuron, sensor, neuron)
+                end
+            end
+        end
+    end
+
+    return graph
 end
 
 function db2magdrs(
