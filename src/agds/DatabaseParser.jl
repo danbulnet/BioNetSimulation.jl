@@ -2,14 +2,17 @@ module DatabaseParser
 
 export db2magdrs, db2magdrs_old
 
-using LibPQ, Tables
+using MySQL
+using LibPQ
+using Tables
 import Dates
 using DataFrames
+
 using ..AGDSSimple
 using ..ASACGraph
 using ..Common
 
-const pkquery = """
+const pkquerypg = """
     SELECT tc.table_name, kc.column_name
     FROM information_schema.table_constraints tc
     JOIN information_schema.key_column_usage kc
@@ -19,7 +22,7 @@ const pkquery = """
     ORDER BY tc.table_name, kc.position_in_unique_constraint;
 """
 
-const fkquery = """
+const fkquerypg = """
     SELECT
         tc.table_name, kcu.column_name,
         ccu.table_name AS foreign_table_name,
@@ -33,6 +36,28 @@ const fkquery = """
     WHERE constraint_type = 'FOREIGN KEY';
 """
 
+const fkquerym = """
+    select fks.table_name as foreign_table, '->' as rel,
+    fks.referenced_table_name as primary_table,
+    fks.constraint_name,
+    group_concat(kcu.column_name
+        order by position_in_unique_constraint separator ', ') 
+        as fk_columns
+    from information_schema.referential_constraints fks
+    join information_schema.key_column_usage kcu
+    on fks.constraint_schema = kcu.table_schema
+    and fks.table_name = kcu.table_name
+    and fks.constraint_name = kcu.constraint_name
+    -- where fks.constraint_schema = 'database name'
+    group by fks.constraint_schema,
+    fks.table_name,
+    fks.unique_constraint_schema,
+    fks.referenced_table_name,
+    fks.constraint_name
+    order by fks.constraint_schema,
+    fks.table_name;
+"""
+
 macro colsquery(table)
     :(string("SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_NAME = '",  $(esc(table)), "';"))
 end
@@ -41,7 +66,7 @@ macro rowsquery(table)
     :(string("SELECT * FROM ",  $(esc(table)), ";"))
 end
 
-function df2magdrs(dfs::Dict{Symbol, DataFrame}; rowlimit::Int=0)::AGDSSimple.Graph
+function df2magds(dfs::Dict{Symbol, DataFrame}; rowlimit::Int=0)::AGDSSimple.Graph
     graph = AGDSSimple.Graph()
 
     for (dfname, df) in dfs
@@ -87,7 +112,50 @@ function df2magdrs(dfs::Dict{Symbol, DataFrame}; rowlimit::Int=0)::AGDSSimple.Gr
     return graph
 end
 
-function db2magdrs(
+function mdb2magds(
+    dbname::String,
+    user::String,
+    password::String;
+    host::String = "localhost",
+    port::Int = 3306,
+    tablefilter::Vector{String} = String[],
+    rowlimit::Int=0
+)::AGDSSimple.Graph
+    conn = DBInterface.connect(
+        MySQL.Connection, host, user, password; db=dbname, port=port
+    )
+
+    tables = columntable(DBInterface.execute(conn, "show tables;"))[1] .|> Symbol
+    if !isempty(tablefilter)
+        tablefilter = Symbol.(tablefilter)
+        for table in tablefilter
+            if !(table in tables)
+                error("filter table $table desn't exists in database")
+            end
+        end
+        tables = tablefilter
+    end
+
+    allfkeys = DBInterface.execute(conn, fkquerym) |> columntable
+    fkeys = Dict{Symbol, Dict{Symbol, Symbol}}()
+    for table in tables
+        tablefkeys = Dict{Symbol, Symbol}()
+        for i in 1:length(allfkeys.primary_table)
+            if table == Symbol(allfkeys.foreign_table[i])
+                tablefkeys[Symbol(allfkeys.fk_columns[i])] = Symbol(
+                    allfkeys.primary_table[i]
+                )
+            end
+        end
+        fkeys[table] = tablefkeys
+    end
+
+    graph = tabs2magds(conn, tables, fkeys, rowlimit)
+    close(conn)
+    graph
+end
+
+function pgdb2magds(
     dbname::String,
     user::String,
     password::String;
@@ -98,40 +166,51 @@ function db2magdrs(
 )::AGDSSimple.Graph
     conn = LibPQ.Connection("host=$host port=$port dbname=$dbname user=$user password=$password")
 
-    result = execute(conn, fkquery)
-    allfkeys = columntable(result)
-
-    result = execute(conn, pkquery)
-    data = columntable(result)
-    
-    tables = if isempty(tablefilter) 
-        filter(x -> !startswith(string(x), "pg_"), map(Symbol, data.table_name))
-    else
-        map(Symbol, tablefilter)
-    end
-
-    graph = AGDSSimple.Graph()
-  
-    tabsfkeys = Dict{Symbol, Set{Symbol}}()
-    tabsfkeystabs = Dict{Symbol, Dict{Symbol, Symbol}}()
-    for table in tables
-        tablefkeys = Set{Symbol}()
-        tablefkeystabs = Dict{Symbol, Symbol}()
-        for i in 1:length(allfkeys.table_name)
-            if table == Symbol(allfkeys.table_name[i])
-                push!(tablefkeys, Symbol(allfkeys.column_name[i]))
-                tablefkeystabs[Symbol(allfkeys.column_name[i])] = Symbol(allfkeys.foreign_table_name[i])
+    data = execute(conn, pkquerypg) |> columntable
+    tables = filter(x -> !startswith(string(x), "pg_"), Symbol.(data.table_name))
+    if !isempty(tablefilter) 
+        tablefilter = Symbol.(tablefilter)
+        for table in tablefilter
+            if !(table in tables)
+                error("filter table $table desn't exists in database")
             end
         end
-        tabsfkeys[table] = tablefkeys
-        tabsfkeystabs[table] = tablefkeystabs
+        tables = tablefilter
     end
 
+    allfkeys = execute(conn, fkquerypg) |> columntable
+    fkeys = Dict{Symbol, Dict{Symbol, Symbol}}()
+    for table in tables
+        tablefkeys = Dict{Symbol, Symbol}()
+        for i in 1:length(allfkeys.table_name)
+            if table == Symbol(allfkeys.table_name[i])
+                tablefkeys[Symbol(allfkeys.column_name[i])] = Symbol(
+                    allfkeys.foreign_table_name[i]
+                )
+            end
+        end
+        fkeys[table] = tablefkeys
+    end
+
+    graph = tabs2magds(conn, tables, fkeys, rowlimit)
+    close(conn)
+    graph
+end
+
+function tabs2magds(
+    conn, 
+    tables::Vector{Symbol},
+    fkeys::Dict{Symbol, Dict{Symbol, Symbol}},
+    rowlimit::Int
+)
+    graph = AGDSSimple.Graph()
+    
     tablestodo = Set(tables)
-    tablesprim = filter(x -> isempty(tabsfkeys[x]), tables)
+    tablesprim = Set(filter(x -> isempty(keys(fkeys[x])), tables))
 
     for table in tablesprim
-        addsensins!(graph, conn, table; rowlimit=rowlimit)
+        tabledata = fetchtable(conn, table)
+        addsensins!(graph, table, tabledata; rowlimit=rowlimit)
     end
     tablesprim = Set(tablesprim)
     tablestodo = setdiff(tablestodo, tablesprim)
@@ -139,7 +218,7 @@ function db2magdrs(
 
     while !isempty(tablestodo)
        for table in tablestodo
-            ftables = tabsfkeystabs[table]
+            ftables = fkeys[table]
             todo = true
             for (_, ftable) in ftables
                 if !(ftable in tablesdone) && ftable in tables
@@ -148,70 +227,81 @@ function db2magdrs(
                 end
             end
             if todo
-                addsensins!(graph, conn, table; rowlimit=rowlimit)
-                # if length(tablefilter) > 1
-                    # addneurons!(graph, conn, table, tabsfkeystabs[table])
-                # end
-                addneurons!(graph, conn, table, tabsfkeystabs[table]; rowlimit=rowlimit)
+                tabledata = fetchtable(conn, table)
+                addsensins!(graph, table, tabledata; rowlimit=rowlimit)
+                addneurons!(
+                    graph, table, tabledata, fkeys[table]; rowlimit=rowlimit
+                )
                 pop!(tablestodo, table)
                 push!(tablesdone, table)
             end
        end
     end
 
-    close(conn)
-
-    return graph
+    graph
 end
 
-function addsensins!(graph::AGDSSimple.Graph, conn, table::Symbol; rowlimit::Int=0)
-    println("adding sensins for ", table)
-    result = execute(conn, @rowsquery(table))
-    rows = columntable(result)
-    columntypes = LibPQ.column_types(result)
-    columns = LibPQ.column_names(result)
+function addsensins!(
+    graph::AGDSSimple.Graph, table::Symbol, tabledata::Dict; rowlimit::Int=0
+)
+    println("adding sensin for ", table)
 
-    graph.neurons[Symbol(table)] = Set{NeuronSimple}()
+    columns = tabledata[:columns]
+    columntypes = tabledata[:columntypes]
+    rows = tabledata[:rows]
+
+    graph.neurons[table] = Set{NeuronSimple}()
 
     for (colindex, column) in enumerate(columns)
-        column = Symbol(column)
         if !(haskey(graph.sensors, column))
-            graph.sensors[column] = ASACGraph.Graph{columntypes[colindex]}(string(column), ordinal) # TODO: datatype
+            coltype, datatype = infertype(columntypes[colindex])
+            graph.sensors[column] = ASACGraph.Graph{coltype}(
+                string(column), datatype
+            )
         end
     end
 
-    nrows = rowlimit > 0 ? min(rowlimit, length(rows[1])) : length(rows[1])
+    tablelen = length(first(rows))
+    nrows = rowlimit > 0 ? min(rowlimit, tablelen) : tablelen
     for i = 1:nrows
-        neuron = AGDSSimple.NeuronSimple("$(table)_$(rows[Symbol(columns[1])][i])", string(table))
-        push!(graph.neurons[Symbol(table)], neuron)
+        neuron = AGDSSimple.NeuronSimple(
+            "$(table)_$(rows[columns[1]][i])", string(table)
+        )
+        push!(graph.neurons[table], neuron)
         for column in columns
-            value = rows[Symbol(column)][i]
-            if typeof(value) != Missing
-                sensor = insert!(graph.sensors[Symbol(column)], rows[Symbol(column)][i])
-                AGDSSimple.connect!(graph, :sensor_neuron, sensor, neuron)
+            value = rows[column][i]
+            if !ismissing(value)
+                if typeof(value) <: AbstractArray
+                    for el in value
+                        sensor = insert!(graph.sensors[column], el)
+                        AGDSSimple.connect!(graph, :sensor_neuron, sensor, neuron)
+                    end
+                else
+                    sensor = insert!(graph.sensors[column], value)
+                    AGDSSimple.connect!(graph, :sensor_neuron, sensor, neuron)
+                end
             end
         end
     end
 end
 
-function addneurons!(graph::AGDSSimple.Graph, conn, table::Symbol, fkeys; rowlimit::Int=0)
+function addneurons!(
+    graph::AGDSSimple.Graph, table::Symbol, tabledata::Dict, fkeys; rowlimit::Int=0
+)
     println("adding neurons for ", table)
-    result = execute(conn, @rowsquery(table))
-    rows = columntable(result)
-    columns = LibPQ.column_names(result)
 
-    nrows = rowlimit > 0 ? min(rowlimit, length(rows[1])) : length(rows[1])
+    columns = tabledata[:columns]
+    rows = tabledata[:rows]
+
+    tablelen = length(first(rows))
+    nrows = rowlimit > 0 ? min(rowlimit, tablelen) : tablelen
     for i = 1:nrows
-        # if i == 1 || i % 1000 == 0 || i == length(rows[1])
-        #     print(i, " ")
-        # end
-        nname = "$(table)_$(rows[Symbol(columns[1])][i])"
-        neuron = findbyname(graph.neurons[Symbol(table)], nname)
+        nname = "$(table)_$(rows[columns[1]][i])"
+        neuron = findbyname(graph.neurons[table], nname)
         for column in columns
-            column = Symbol(column)
             if haskey(fkeys, column)
                 ftable = fkeys[column]
-                fnname = "$(ftable)_$(rows[Symbol(column)][i])"
+                fnname = "$(ftable)_$(rows[column][i])"
                 neuronsgroup = if haskey(graph.neurons, ftable)
                     graph.neurons[ftable]
                 else
@@ -228,178 +318,39 @@ function addneurons!(graph::AGDSSimple.Graph, conn, table::Symbol, fkeys; rowlim
             end
         end
     end
-    # println()
 end
 
-function db2magdrs_old(
-    dbname::String,
-    user::String,
-    password::String;
-    host::String = "localhost",
-    port::String = "5432",
-    tablefilter::Vector{String} = String[],
-)::AGDSSimple.Graph
-    conn = LibPQ.Connection("host=$host port=$port dbname=$dbname user=$user password=$password")
+function infertype(coltype::DataType)
+    if coltype <: AbstractArray
+        coltype = eltype(coltype)
+    end
 
-    result = execute(conn, fkquery)
-    allfkeys = columntable(result)
-
-    result = execute(conn, pkquery)
-    data = columntable(result)
-    
-    if isempty(tablefilter) 
-        tables = data.table_name
+    datatype = if coltype <: Number
+        numerical
+    elseif coltype <: AbstractString
+        coltype = String
+        categorical
+    elseif coltype <: Dates.DateTime 
+        ordinal
     else
-        tables = tablefilter
+        error("unknown data type for $coltype")
     end
+    coltype, datatype
+end
 
-    graph = AGDSSimple.Graph()
-    # graph.connections[:sensor_neuron] = Set{Connection}()
-    # graph.connections[:neuron_neuron] = Set{Connection}()
+function fetchtable(conn, table::Symbol)
+    rows = if typeof(conn) == MySQL.Connection
+        DBInterface.execute(conn, @rowsquery(table))
+    elseif typeof(conn) == LibPQ.Connection
+        LibPQ.execute(conn, @rowsquery(table))
+    else
+        error("unsupported connection type, supported types are: MySQL, LibPQ")
+    end |> columntable
 
-    for table in tables
-        println("table ", table, ": ")
-        fkeys = Dict{String, NamedTuple{(:table, :column),Tuple{Symbol, String}}}()
-        for i in 1:length(allfkeys.table_name)
-            if table == allfkeys.table_name[i]
-                fkeys[allfkeys.column_name[i]] =
-                    (table = Symbol(allfkeys.foreign_table_name[i]),
-                     column = allfkeys.foreign_column_name[i])
-            end
-        end
-
-        println(fkeys)
-
-        # result = execute(conn, @colsquery(table))
-        # data = columntable(result)
-        # columns = data.column_name
-
-        result = execute(conn, @rowsquery(table))
-        rows = columntable(result)
-        columntypes = LibPQ.column_types(result)
-        columns = LibPQ.column_names(result)
-        print(columns)
-
-        graph.neurons[Symbol(table)] = Set{NeuronSimple}()
-
-        for (colindex, column) in enumerate(columns)
-            column = Symbol(column)
-            if !(haskey(graph.sensors, column)) && !(haskey(fkeys, column))
-                graph.sensors[column] = ASACGraph.Graph{columntypes[colindex]}(string(column), ordinal) # TODO: datatype
-            end
-        end
-
-        for i = 1:length(rows[1])
-            if i == 1 || i % 100 == 0
-                print(i, " ")
-            end
-            neuron = AGDSSimple.NeuronSimple("$(table)_$(rows[Symbol(columns[1])][i])", string(table))
-            push!(graph.neurons[Symbol(table)], neuron)
-            for (colindex, column) in enumerate(columns)
-                value = rows[Symbol(column)][i]
-                if typeof(value) != Missing && !(haskey(fkeys, column))
-                    treekeystype = ASACGraph.keytype(graph.sensors[Symbol(column)])
-                    # value = if treekeystype == String
-                    #     string(treekeystype, rows[Symbol(column)][i])
-                    # else
-                    #     convert(treekeystype, rows[Symbol(column)][i])
-                    # end
-                    sensor = insert!(graph.sensors[Symbol(column)], rows[Symbol(column)][i])
-
-                    # s2nweight = 1 / (length(sensor.out) + 1)
-                    # for connout in sensor.out
-                    #     connout.weight = s2nweight
-                    # end
-
-                    # AGDSSimple.connect!(
-                    #     graph,
-                    #     :sensor_neuron,
-                    #     sensor,
-                    #     neuron,
-                    #     bidirectional,
-                    #     s2nweight,
-                    #     1.0
-                    # )
-                    AGDSSimple.connect!(graph, :sensor_neuron, sensor, neuron)
-                end
-            end
-        end
-        println()
-    end
-
-    for table in tables
-        println("table ", table, ": ")
-        fkeys = Dict{String, NamedTuple{(:table, :column),Tuple{Symbol, String}}}()
-        for i in 1:length(allfkeys.table_name)
-            if table == allfkeys.table_name[i]
-                fkeys[allfkeys.column_name[i]] =
-                    (table = Symbol(allfkeys.foreign_table_name[i]),
-                     column = allfkeys.foreign_column_name[i])
-            end
-        end
-
-        # result = execute(conn, @colsquery(table))
-        # data = columntable(result)
-        # columns = data.column_name
-
-        # result = execute(conn, @rowsquery(table))
-        # rows = columntable(result)
-
-        result = execute(conn, @rowsquery(table))
-        rows = columntable(result)
-        columns = LibPQ.column_names(result)
-        print(columns)
-
-        for i = 1:length(rows[1])
-            if i == 1 || i % 100 == 0
-                print(i, " ")
-            end
-            nname = "$table $(rows[Symbol(columns[1])][i])"
-            neuron = findbyname(graph.neurons[Symbol(table)], nname)
-            for column in columns
-                if haskey(fkeys, column)
-                    ftable = fkeys[column].table
-                    fnname = "$ftable $(rows[Symbol(column)][i])"
-                    neuronsgroup = if haskey(graph.neurons, ftable)
-                        graph.neurons[ftable]
-                    else
-                        nothing
-                    end
-                    fneuron = if !isnothing(neuronsgroup) 
-                        findbyname(graph.neurons[ftable], fnname)
-                    else 
-                        nothing
-                    end
-                    if !isnothing(fneuron)
-                        AGDSSimple.connect!(graph, :neuron_neuron, fneuron, neuron)
-                    # else
-                    #     println("failed to find neuron $fnname in $ftable for $(neuron.name)")
-                    end
-
-                    # outobjs = sum(typeof(out.to) === Neuron for out in fneuron.out)
-                    # n2nweight = 1 / (outobjs + 1)
-                    # for connout in fneuron.out
-                    #     connout.weight = n2nweight
-                    # end
-
-                    # AGDSSimple.connect!(
-                    #     graph,
-                    #     :neuron_neuron,
-                    #     fneuron,
-                    #     neuron,
-                    #     bidirectional,
-                    #     n2nweight,
-                    #     1.0
-                    # )
-                end
-            end
-        end
-        println()
-    end
-
-    close(conn)
-
-    return graph
+    columntypes = eltype.(collect.(skipmissing.(values(rows))))
+    columns = rows |> keys
+    
+    Dict(:columns => columns, :columntypes => columntypes, :rows => rows)
 end
 
 end # module

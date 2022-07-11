@@ -1,6 +1,6 @@
 module BioNet
 
-export AGDS, AGDSSimple, ASAGraph, ASACGraph, ASAGraphSimple, ASACGraphSimple
+export AGDS, AGDSSimple, DatabaseParser, ASAGraph, ASACGraph, ASAGraphSimple, ASACGraphSimple
 export Simulation, SubtreesBenchmarks, ECG, AssociativeSequentialMemory
 
 include("common/Common.jl")

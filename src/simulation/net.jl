@@ -42,7 +42,7 @@ function graphsim(
         dfs[name] = CSV.File(filename) |> DataFrame
     end
 
-    magds = DatabaseParser.df2magdrs(dfs; rowlimit=rowlimit)
+    magds = DatabaseParser.df2magds(dfs; rowlimit=rowlimit)
 
     sensorsnames = sort(map(first, collect(magds.sensors)))
     sensors, totalwidth = rendersensors(magds, sensorfilter, parentscene, scenes)
@@ -101,7 +101,7 @@ function graphsim(
 
     figure, parentscene, scenes, camera = createscenes(resolution, camera3d)
     
-    magds = DatabaseParser.db2magdrs(
+    magds = DatabaseParser.pgdb2magds(
         database, username, password;
         port=port, tablefilter=tablefilter, rowlimit=rowlimit
     )

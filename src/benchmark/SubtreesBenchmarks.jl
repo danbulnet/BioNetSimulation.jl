@@ -58,9 +58,9 @@ end
 function insertrand(;nlimit::UInt64 = UInt64(1_000_000), repeats::Int = 1)
     GC.enable(false)
     
-    # percents = collect(0.0:10.0:90.0)
-    percents = Float64[]
-    push!(percents, [90, 99, 99.9, 99.99, 99.999]...)
+    percents = collect(0.0:10.0:90.0)
+    # percents = Float64[]
+    push!(percents, [95, 99, 99.9, 99.99, 99.999]...)
 
     times = zeros(7, length(percents))
 
@@ -150,7 +150,7 @@ function insertrand(;nlimit::UInt64 = UInt64(1_000_000), repeats::Int = 1)
 
     println("$(typeof(vec(times[1, :]))) $(vec(times[1, :]))")
 
-    (timesdf, times)
+    timesdf
 end
 
 function medianrand(;nlimit::Int = 1_000_000, repeats::Int = 10)
@@ -206,14 +206,25 @@ function medianrand(;nlimit::Int = 1_000_000, repeats::Int = 10)
         "asacgraphs" => times[2, :]
     )
 
-    (timesdf, times)
+    timesdf
 end
 
 """
     plot lines for each column, first column contains labels
-    example: resultlines(df; yscale=identity, title="some title")
+    example:
+    ```
+    medianplot = resultlines(
+        mediandf; 
+        yscale=identity, 
+        title="Median calculation time", 
+        filename=joinpath(experimentdir, "medianrand.png")
+    )
+    ```
 """
-function resultlines(timesdf::DataFrame; title="", yscale::Function=identity)
+function resultlines(
+    timesdf::DataFrame; 
+    title="", yscale::Function=identity, filename::Union{String, Nothing}=nothing
+)
     f = Figure()
     ax = f[1, 1] = Axis(
         f, yscale=yscale, title=title,
@@ -246,6 +257,8 @@ function resultlines(timesdf::DataFrame; title="", yscale::Function=identity)
     end
 
     f[1, 2] = Legend(f, ax, framevisible = false)
+
+    !isnothing(filename) && GLMakie.save(filename, f)
 
     f
 end
