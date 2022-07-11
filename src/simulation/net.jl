@@ -95,17 +95,20 @@ function graphsim(
     connectorcolorstart=colorant"honeydew4", connectorcolorend=colorant"honeydew2",
     tablefilter=String[], rowlimit::Int=0,
     sensorfilter::Set{Symbol}=Set(),
+    dbtype=:mariadb
 )
     set_theme!(theme_black(), resolution=resolution)
     GLMakie.enable_SSAO[] = ssao
 
     figure, parentscene, scenes, camera = createscenes(resolution, camera3d)
     
-    # magds = MAGDSParser.pgdb2magds(
-    #     database, username, password;
-    #     port=string(port), tablefilter=tablefilter, rowlimit=rowlimit
-    # )
-    magds = MAGDSParser.mdb2magds(
+    magdsparser = if dbtype == :mariadb
+        MAGDSParser.mdb2magds
+    elseif dbtype == :postgres
+        MAGDSParser.pgdb2magds
+    end
+
+    magds = magdsparser(
         database, username, password;
         port=port, tablefilter=tablefilter, rowlimit=rowlimit
     )

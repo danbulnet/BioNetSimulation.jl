@@ -110,7 +110,7 @@ function pgdb2magds(
     user::String,
     password::String;
     host::String = "localhost",
-    port::String = "5432",
+    port::Int = 5432,
     tablefilter::Vector{String} = String[],
     rowlimit::Int=0
 )::MAGDSSimple.Graph
@@ -302,16 +302,23 @@ end
 
 function fetchtable(conn, table::Symbol)
     lib = nothing
+    datatype_symbol = nothing
+    columnname_symbol = nothing
     if typeof(conn) == MySQL.Connection
         lib = DBInterface
+        datatype_symbol = :DATA_TYPE
+        columnname_symbol = :COLUMN_NAME
     elseif typeof(conn) == LibPQ.Connection
         lib = LibPQ
+        datatype_symbol = :data_type
+        columnname_symbol = :column_name
     else
         error("unsupported connection type, supported types are: MySQL, LibPQ")
     end 
     rows = lib.execute(conn, @rowsquery(table)) |> columntable
-    dt = Symbol.(columntable(lib.execute(conn, typesquery(table))).DATA_TYPE)
-    dtnames = Symbol.(columntable(lib.execute(conn, typesquery(table))).COLUMN_NAME)
+    
+    dt = Symbol.(columntable(lib.execute(conn, typesquery(table)))[datatype_symbol])
+    dtnames = Symbol.(columntable(lib.execute(conn, typesquery(table)))[columnname_symbol])
     datatypes = Dict{Symbol, Symbol}()
     for i in 1:length(dt)
         datatypes[dtnames[i]] = dt[i]
