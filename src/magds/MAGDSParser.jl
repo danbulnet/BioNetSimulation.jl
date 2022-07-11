@@ -1,4 +1,4 @@
-module DatabaseParser
+module MAGDSParser
 
 export db2magdrs, db2magdrs_old
 
@@ -8,7 +8,7 @@ using Tables
 import Dates
 using DataFrames
 
-using ..AGDSSimple
+using ..MAGDSSimple
 using ..ASACGraph
 using ..Common
 
@@ -16,8 +16,8 @@ include("query.jl")
 
 const nullvalues = [nothing, ""]
 
-function df2magds(dfs::Dict{Symbol, DataFrame}; rowlimit::Int=0)::AGDSSimple.Graph
-    graph = AGDSSimple.Graph()
+function df2magds(dfs::Dict{Symbol, DataFrame}; rowlimit::Int=0)::MAGDSSimple.Graph
+    graph = MAGDSSimple.Graph()
 
     for (dfname, df) in dfs
         rows = collect(eachrow(df))
@@ -43,7 +43,7 @@ function df2magds(dfs::Dict{Symbol, DataFrame}; rowlimit::Int=0)::AGDSSimple.Gra
 
         nrows = rowlimit > 0 ? min(rowlimit, length(rows)) : length(rows)
         for i = 1:nrows
-            neuron = AGDSSimple.NeuronSimple("$(dfname)_$i", string(dfname))
+            neuron = MAGDSSimple.NeuronSimple("$(dfname)_$i", string(dfname))
             push!(graph.neurons[Symbol(dfname)], neuron)
             for (colindex, column) in enumerate(columns)
                 value = if columntypes[colindex] <: AbstractString 
@@ -53,7 +53,7 @@ function df2magds(dfs::Dict{Symbol, DataFrame}; rowlimit::Int=0)::AGDSSimple.Gra
                 end
                 if !ismissing(value)
                     sensor = insert!(graph.sensors[column], value)
-                    AGDSSimple.connect!(graph, :sensor_neuron, sensor, neuron)
+                    MAGDSSimple.connect!(graph, :sensor_neuron, sensor, neuron)
                 end
             end
         end
@@ -70,7 +70,7 @@ function mdb2magds(
     port::Int = 3306,
     tablefilter::Vector{String} = String[],
     rowlimit::Int=0
-)::AGDSSimple.Graph
+)::MAGDSSimple.Graph
     conn = DBInterface.connect(
         MySQL.Connection, host, user, password; db=dbname, port=port
     )
@@ -113,7 +113,7 @@ function pgdb2magds(
     port::String = "5432",
     tablefilter::Vector{String} = String[],
     rowlimit::Int=0
-)::AGDSSimple.Graph
+)::MAGDSSimple.Graph
     conn = LibPQ.Connection("host=$host port=$port dbname=$dbname user=$user password=$password")
 
     data = execute(conn, pkquerypg) |> columntable
@@ -153,7 +153,7 @@ function tabs2magds(
     fkeys::Dict{Symbol, Dict{Symbol, Symbol}},
     rowlimit::Int
 )
-    graph = AGDSSimple.Graph()
+    graph = MAGDSSimple.Graph()
     
     tablestodo = Set(tables)
     tablesprim = Set(filter(x -> isempty(keys(fkeys[x])), tables))
@@ -192,7 +192,7 @@ function tabs2magds(
 end
 
 function addsensins!(
-    graph::AGDSSimple.Graph, table::Symbol, tabledata::Dict; rowlimit::Int=0
+    graph::MAGDSSimple.Graph, table::Symbol, tabledata::Dict; rowlimit::Int=0
 )
     println("adding sensin for ", table)
 
@@ -215,7 +215,7 @@ function addsensins!(
     tablelen = length(first(rows))
     nrows = rowlimit > 0 ? min(rowlimit, tablelen) : tablelen
     for i = 1:nrows
-        neuron = AGDSSimple.NeuronSimple(
+        neuron = MAGDSSimple.NeuronSimple(
             "$(table)_$(rows[columns[1]][i])", string(table)
         )
         push!(graph.neurons[table], neuron)
@@ -227,17 +227,17 @@ function addsensins!(
                 if typeof(value) <: AbstractArray
                     for el in value
                         sensor = insert!(graph.sensors[column], coltype(el))
-                        AGDSSimple.connect!(graph, :sensor_neuron, sensor, neuron)
+                        MAGDSSimple.connect!(graph, :sensor_neuron, sensor, neuron)
                     end
                 elseif datatype == :set
                     parser = el -> (coltype <: Number) ? parse(coltype, el) : coltype(el)
                     for el in split(string(value), ",")
                         sensor = insert!(graph.sensors[column], parser(el))
-                        AGDSSimple.connect!(graph, :sensor_neuron, sensor, neuron)
+                        MAGDSSimple.connect!(graph, :sensor_neuron, sensor, neuron)
                     end
                 else
                     sensor = insert!(graph.sensors[column], coltype(value))
-                    AGDSSimple.connect!(graph, :sensor_neuron, sensor, neuron)
+                    MAGDSSimple.connect!(graph, :sensor_neuron, sensor, neuron)
                 end
             end
         end
@@ -245,7 +245,7 @@ function addsensins!(
 end
 
 function addneurons!(
-    graph::AGDSSimple.Graph, table::Symbol, tabledata::Dict, fkeys; rowlimit::Int=0
+    graph::MAGDSSimple.Graph, table::Symbol, tabledata::Dict, fkeys; rowlimit::Int=0
 )
     println("adding neurons for ", table)
 
@@ -272,7 +272,7 @@ function addneurons!(
                     nothing
                 end
                 if !isnothing(fneuron)
-                    AGDSSimple.connect!(graph, :neuron_neuron, fneuron, neuron)
+                    MAGDSSimple.connect!(graph, :neuron_neuron, fneuron, neuron)
                 end
             end
         end

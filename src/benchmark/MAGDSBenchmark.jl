@@ -1,6 +1,6 @@
 module MAGDSBenchmark
 
-using BioNet.AGDSSimple
+using BioNet.MAGDSSimple
 using BioNet.ASAGraph
 using BioNet.ASAGraph: Element
 using BioNet.Common
@@ -14,7 +14,7 @@ e2tabs = ["prb_probe"]
 e3tabs = ["map_coord_feature"]
 
 function experiment1(
-    graph::AGDSSimple.Graph, 
+    graph::MAGDSSimple.Graph, 
     tablename::Symbol = :gxd_specimen, 
     fk::Symbol = :age, 
     limit::Int64 = 100
@@ -36,7 +36,7 @@ function experiment1(
     return ret
 end
 
-function experiment2(graph::AGDSSimple.Graph)
+function experiment2(graph::MAGDSSimple.Graph)
     agemin = graph.sensors[:agemin]
     agemin_minkey = agemin.minkey
     if isnothing(agemin_minkey)
@@ -128,7 +128,7 @@ function experiment2(graph::AGDSSimple.Graph)
     ret
 end
 
-function experiment3(graph::AGDSSimple.Graph)
+function experiment3(graph::MAGDSSimple.Graph)
     agemin = graph.sensors[:agemin]
     agemin_minkey = agemin.minkey
     if isnothing(agemin_minkey)
@@ -222,7 +222,7 @@ function experiment3(graph::AGDSSimple.Graph)
     sum / count
 end
 
-function experiment4(graph::AGDSSimple.Graph, col::Symbol)
+function experiment4(graph::MAGDSSimple.Graph, col::Symbol)
     ret = Vector{String}()
     
     asa = graph.sensors[col]
@@ -244,7 +244,7 @@ function experiment4(graph::AGDSSimple.Graph, col::Symbol)
     ret
 end
 
-function experiment5(graph::AGDSSimple.Graph, col::Symbol)
+function experiment5(graph::MAGDSSimple.Graph, col::Symbol)
     asa = graph.sensors[col]
     maxkey = asa.maxkey
     if isnothing(maxkey)
@@ -254,7 +254,7 @@ function experiment5(graph::AGDSSimple.Graph, col::Symbol)
     maxkey
 end
 
-function experiment6(graph::AGDSSimple.Graph, col::Symbol)::Float64
+function experiment6(graph::MAGDSSimple.Graph, col::Symbol)::Float64
     sum::Int128 = 0
     count = 0
     
@@ -278,7 +278,7 @@ function experiment6(graph::AGDSSimple.Graph, col::Symbol)::Float64
     sum / count
 end
 
-function experiment7(graph::AGDSSimple.Graph, tab::Symbol)
+function experiment7(graph::MAGDSSimple.Graph, tab::Symbol)
     length(graph.neurons[tab])
 end
 

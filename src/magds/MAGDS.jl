@@ -1,33 +1,43 @@
-module AGDSSimple
+module MAGDS
 
 export addneuron!, connect!, deactivate!, findbyname, Neuron
 
-import ..Common: Opt, ConnectionSimple
+import ..Common: Opt, Connection
 import ..ASAGraph
-include("NeuronSimple.jl")
+include("Neuron.jl")
 
 struct Graph <: Common.AbstractGraph
-    sensors::Dict{Symbol, AbstractSensoryField}
-    neurons::Dict{Symbol, Set{NeuronSimple}}
-    connections::Dict{Symbol, Set{Common.ConnectionSimple}}
+    sensors::Dict{Symbol, Common.AbstractSensoryField}
+    neurons::Dict{Symbol, Set{Common.AbstractNeuron}}
+    connections::Dict{Symbol, Set{Common.Connection}}
 
     function Graph()
         new(
-            Dict{Symbol, AbstractSensoryField}(),
-            Dict{Symbol, Set{NeuronSimple}}(),
-            Dict{Symbol, Set{Common.ConnectionSimple}}()
+            Dict{Symbol, Common.AbstractSensoryField}(),
+            Dict{Symbol, Set{Common.AbstractNeuron}}(),
+            Dict{Symbol, Set{Common.Connection}}()
         )
     end
 end
 
 sensorweights(sensor::Common.AbstractSensor) = 1 / (length(sensor.out) + 1)
 
-function addneuron!(graph::Graph, name::String, type::Symbol)::NeuronSimple
+function countedsensorweights(sensor::Common.AbstractSensor)
+    totalcount = 0
+    for connout in sensor.out
+        totalcount += connout.counter
+    end
+    for connout in sensor.out
+        connout.weight = connout.counter / totalcount
+    end
+end
+
+function addneuron!(graph::Graph, name::String, type::Symbol)::Neuron
     if !haskey(graph.neurons, type)
-        graph.neurons[type] = Set{NeuronSimple}()
+        graph.neurons[type] = Set{Common.AbstractNeuron}()
     end
     
-    neuron = NeuronSimple(name)
+    neuron = Neuron(name)
     push!(graph.neurons[type], neuron)
     neuron
 end
@@ -39,18 +49,30 @@ function connect!( # LEGACY !
     second::Common.AbstractNeuron
 )
     if !haskey(graph.connections, type)
-        graph.connections[type] = Set{Common.ConnectionSimple}()
+        graph.connections[type] = Set{Common.Connection}()
     end
 
-    first2second = Common.ConnectionSimple(first, second)
+    first2second = Common.Connection(first, second, 1.0)
     push!(graph.connections[type], first2second)
     addconn!(first, first2second, :out)
     addconn!(second, first2second, :in)
 
-    second2first = Common.ConnectionSimple(second, first)
+    second2first = Common.Connection(second, first, 1.0)
     push!(graph.connections[type], second2first)
     addconn!(second, second2first, :out)
     addconn!(first, second2first, :in)
+
+    if isa(first, Common.AbstractSensor)
+        outweight = sensorweights(first)
+        for connout in first.out
+            connout.weight = outweight
+        end
+    elseif isa(second, Common.AbstractSensor)
+        outweight = sensorweights(second)
+        for connout in second.out
+            connout.weight = outweight
+        end
+    end
 end
 
 function connect1d!(
@@ -60,19 +82,25 @@ function connect1d!(
     second::Common.AbstractNeuron
 )
     if !haskey(graph.connections, type)
-        graph.connections[type] = Set{Common.ConnectionSimple}()
+        graph.connections[type] = Set{Common.Connection}()
     end
         
     first2second = areconnected(graph, type, first, second)
     if isnothing(first2second)
-        first2second = Common.ConnectionSimple(first, second)
+        first2second = Common.Connection(first, second, 1.0)
         push!(graph.connections[type], first2second)
         addconn!(first, first2second, :out)
         addconn!(second, first2second, :in)
+    else
+        Common.counterup!(first2second)
+    end
+
+    if isa(first, Common.AbstractSensor)
+        countedsensorweights(first)
     end
 end
 
-function areconnected(graph, type, first, second)::Union{ConnectionSimple, Nothing}
+function areconnected(graph, type, first, second)::Union{Connection, Nothing}
     for conn in graph.connections[type]
         if first == conn.from && second == conn.to
             return conn
@@ -81,7 +109,7 @@ function areconnected(graph, type, first, second)::Union{ConnectionSimple, Nothi
     return nothing
 end
 
-function findbyname(neurons::Set{NeuronSimple}, name::String)::Opt{NeuronSimple}
+function findbyname(neurons::Set{Common.AbstractNeuron}, name::String)::Opt{Common.AbstractNeuron}
     for neuron in neurons
         if neuron.name == name
             return neuron
@@ -107,10 +135,10 @@ function deactivate!(graph::Graph, neurons::Bool = true, sensors::Bool = true)::
     nothing
 end
 
-function Base.show(io::IO, conn::ConnectionSimple)
+function Base.show(io::IO, conn::Connection)
     fromname = isa(conn.from, ASAGraph.Element) ? ASAGraph.name(conn.from) : name(conn.from)
     toname = isa(conn.to, ASAGraph.Element) ? ASAGraph.name(conn.to) : name(conn.to)
-    println(fromname, " => ", toname)
+    println(fromname, " => ", toname, " weight: ", round.(conn.weight; digits=5))
 end
 
 end # module

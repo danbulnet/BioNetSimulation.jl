@@ -10,7 +10,7 @@ using CSV
 # using WGLMakie
 # using JSServe
 
-import BioNet: ASACGraph, DatabaseParser, AGDSSimple, Simulation
+import BioNet: ASACGraph, MAGDSParser, MAGDSSimple, Simulation
 import BioNet.ASAGraph
 import BioNet.ASACGraph: AbstractSensor, id
 
@@ -42,7 +42,7 @@ function graphsim(
         dfs[name] = CSV.File(filename) |> DataFrame
     end
 
-    magds = DatabaseParser.df2magds(dfs; rowlimit=rowlimit)
+    magds = MAGDSParser.df2magds(dfs; rowlimit=rowlimit)
 
     sensorsnames = sort(map(first, collect(magds.sensors)))
     sensors, totalwidth = rendersensors(magds, sensorfilter, parentscene, scenes)
@@ -101,11 +101,11 @@ function graphsim(
 
     figure, parentscene, scenes, camera = createscenes(resolution, camera3d)
     
-    # magds = DatabaseParser.pgdb2magds(
+    # magds = MAGDSParser.pgdb2magds(
     #     database, username, password;
     #     port=string(port), tablefilter=tablefilter, rowlimit=rowlimit
     # )
-    magds = DatabaseParser.mdb2magds(
+    magds = MAGDSParser.mdb2magds(
         database, username, password;
         port=port, tablefilter=tablefilter, rowlimit=rowlimit
     )
@@ -333,7 +333,7 @@ function connecgraph(
     conncections = Dict{Symbol, Dict}()
     for (cname, currentneurons) in magds.neurons
         for neuron in currentneurons
-            _sourcecluster, sourceid = AGDSSimple.id(neuron)
+            _sourcecluster, sourceid = MAGDSSimple.id(neuron)
             sourceneuron = neurons[cname][sourceid]
             sourceneurongeometry = meshgeometry(sourceneuron[:neuron])
             sourceneuroncenter = sourceneurongeometry[:center]
@@ -358,8 +358,8 @@ function connecgraph(
                     )
                     connectionname = Symbol("$(sourceid)_$(asagraph)_$targetvalue")
                     conncections[connectionname] = Dict(:line => line, :texts => texts)
-                elseif to isa AGDSSimple.AbstractNeuron
-                    targetcluster, targetneuronid = AGDSSimple.id(to)
+                elseif to isa MAGDSSimple.AbstractNeuron
+                    targetcluster, targetneuronid = MAGDSSimple.id(to)
                     targetneuron = neurons[targetcluster][targetneuronid]
                     targetneurongeometry = meshgeometry(targetneuron[:neuron])
                     targetneuroncenter = targetneurongeometry[:center]
