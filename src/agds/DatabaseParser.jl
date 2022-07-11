@@ -14,6 +14,8 @@ using ..Common
 
 include("query.jl")
 
+const nullvalues = [nothing, ""]
+
 function df2magds(dfs::Dict{Symbol, DataFrame}; rowlimit::Int=0)::AGDSSimple.Graph
     graph = AGDSSimple.Graph()
 
@@ -196,6 +198,7 @@ function addsensins!(
 
     columns = tabledata[:columns]
     columntypes = tabledata[:columntypes]
+    datatypes = tabledata[:datatypes]
     rows = tabledata[:rows]
 
     graph.neurons[table] = Set{NeuronSimple}()
@@ -216,16 +219,24 @@ function addsensins!(
             "$(table)_$(rows[columns[1]][i])", string(table)
         )
         push!(graph.neurons[table], neuron)
-        for column in columns
+        for (colindex, column) in enumerate(columns)
+            datatype = datatypes[column]
             value = rows[column][i]
-            if !ismissing(value)
+            if !ismissing(value) && !(value in nullvalues)
+                coltype, _ = infertype(columntypes[colindex])
                 if typeof(value) <: AbstractArray
                     for el in value
-                        sensor = insert!(graph.sensors[column], el)
+                        sensor = insert!(graph.sensors[column], coltype(el))
+                        AGDSSimple.connect!(graph, :sensor_neuron, sensor, neuron)
+                    end
+                elseif datatype == :set
+                    parser = el -> (coltype <: Number) ? parse(coltype, el) : coltype(el)
+                    for el in split(string(value), ",")
+                        sensor = insert!(graph.sensors[column], parser(el))
                         AGDSSimple.connect!(graph, :sensor_neuron, sensor, neuron)
                     end
                 else
-                    sensor = insert!(graph.sensors[column], value)
+                    sensor = insert!(graph.sensors[column], coltype(value))
                     AGDSSimple.connect!(graph, :sensor_neuron, sensor, neuron)
                 end
             end
@@ -272,6 +283,9 @@ function infertype(coltype::DataType)
     if coltype <: AbstractArray
         coltype = eltype(coltype)
     end
+    if coltype <: Integer
+        coltype = Int
+    end
 
     datatype = if coltype <: Number
         numerical
@@ -287,18 +301,31 @@ function infertype(coltype::DataType)
 end
 
 function fetchtable(conn, table::Symbol)
-    rows = if typeof(conn) == MySQL.Connection
-        DBInterface.execute(conn, @rowsquery(table))
+    lib = nothing
+    if typeof(conn) == MySQL.Connection
+        lib = DBInterface
     elseif typeof(conn) == LibPQ.Connection
-        LibPQ.execute(conn, @rowsquery(table))
+        lib = LibPQ
     else
         error("unsupported connection type, supported types are: MySQL, LibPQ")
-    end |> columntable
+    end 
+    rows = lib.execute(conn, @rowsquery(table)) |> columntable
+    dt = Symbol.(columntable(lib.execute(conn, typesquery(table))).DATA_TYPE)
+    dtnames = Symbol.(columntable(lib.execute(conn, typesquery(table))).COLUMN_NAME)
+    datatypes = Dict{Symbol, Symbol}()
+    for i in 1:length(dt)
+        datatypes[dtnames[i]] = dt[i]
+    end
 
-    columntypes = eltype.(collect.(skipmissing.(values(rows))))
+    columntypes = eltype.(collect.(skipmissing.(values(rows)))) 
     columns = rows |> keys
     
-    Dict(:columns => columns, :columntypes => columntypes, :rows => rows)
+    Dict(
+        :columns => columns, 
+        :columntypes => columntypes,
+        :datatypes => datatypes,
+        :rows => rows
+    )
 end
 
 end # module

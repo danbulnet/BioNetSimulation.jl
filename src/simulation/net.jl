@@ -86,7 +86,7 @@ function graphsim(
 end
 
 function graphsim(
-    database, username, password, port="5432";
+    database::String, username::String, password::String, port::Int;
     resolution=(3700, 2000),
     camera3d=true, ssao=false,
     neuronsize=Point3(1.0, 0.7, 0.1), neurongap=2.0,
@@ -101,7 +101,11 @@ function graphsim(
 
     figure, parentscene, scenes, camera = createscenes(resolution, camera3d)
     
-    magds = DatabaseParser.pgdb2magds(
+    # magds = DatabaseParser.pgdb2magds(
+    #     database, username, password;
+    #     port=string(port), tablefilter=tablefilter, rowlimit=rowlimit
+    # )
+    magds = DatabaseParser.mdb2magds(
         database, username, password;
         port=port, tablefilter=tablefilter, rowlimit=rowlimit
     )

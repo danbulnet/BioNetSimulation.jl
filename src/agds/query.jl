@@ -51,3 +51,11 @@ end
 macro rowsquery(table)
     :(string("SELECT * FROM ",  $(esc(table)), ";"))
 end
+
+function typesquery(table::Symbol)
+    """
+        SELECT COLUMN_NAME, DATA_TYPE
+        from INFORMATION_SCHEMA.COLUMNS 
+        where table_name='$table';
+    """
+end
