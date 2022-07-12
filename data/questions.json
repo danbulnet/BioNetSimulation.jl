@@ -1,27 +1,194 @@
 {
     "questions_keys": {
         "terrain": {
+            "question": "Jakie ukształtowanie terenu preferujesz?",
             "type": "range",
             "attributes": {
-                "min": 0,
-                "max": 1
+                "max": 1,
+                "neutral": 0,
+                "min": -1
             },
-            "question": "Jakie ukształtowanie terenu preferujesz?",
-            "label": {
-                "min": "nizinne",
-                "max": "górzyste"
+            "labels": {
+                "max": "górzyste",
+                "neutral": "obojętne",
+                "min": "nizinne"
             }
         },
         "water": {
+            "question": "Bliskość morza, jeziora lub rzeki jest dla Ciebie ważna?",
             "type": "range",
             "attributes": {
-                "min": 0,
-                "max": 1
+                "max": 1,
+                "neutral": 0,
+                "min": -1
             },
-            "question": "Czy bliskość morza, jeziora lub rzeki jest dla Ciebie ważna?",
-            "label": {
-                "min": "bardzo źle",
-                "max": "dobrze"
+            "labels": {
+                "max": "tak",
+                "neutral": "obojętne",
+                "min": "nie"
+            }
+        },
+        "transport": {
+            "question": "Jakiego typu transportu używasz?",
+            "type": "set",
+            "options": {
+                "car": "samochód",
+                "bicycle": "rower",
+                "public_transport": "komunikacja miejska", // TOOD: przedyskutować czy lepsze rozbicie
+                // "tram": "tramwaj",
+                // "metro": "metro",
+                // "bus": "autobus",
+                "taxi": "taxi",
+                "train": "pociąg",
+                "airplane": "samolot" 
+            }
+        },
+        "location": {
+            "question": "Preferujesz życie w centrum miasta czy spokojne osiedla podmiejskie?",
+            "type": "range",
+            "attributes": {
+                "max": 1,
+                "neutral": 0,
+                "min": 0
+            },
+            "labels": {
+                "max": "centrum",
+                "neutral": "obojętne",
+                "min": "obrzeża"
+            }
+        },
+        "environment": {
+            "question": "Jaki rodzaj otoczenia preferujesz?",
+            "type": "range",
+            "attributes": {
+                "max": 1,
+                "neutral": 0,
+                "min": -1
+            },
+            "labels": {
+                "max": "spokojne i zielone",
+                "neutral": "obojętne",
+                "min": "bliskość sklepów i usług"
+            }
+        },
+        "shopping": {
+            "question": "Często robisz zakupy?",
+            "type": "range",
+            "attributes": {
+                "max": 1,
+                "min": 0
+            },
+            "labels": {
+                "max": "często",
+                "min": "rzadko"
+            }
+        },
+        "office": {
+            "question": "Często odwiedzasz użędy osobiście?",
+            "type": "range",
+            "attributes": {
+                "max": 1,
+                "min": 0
+            },
+            "labels": {
+                "max": "często",
+                "min": "rzadko"
+            }
+        },
+        "health": {
+            "question": "Bliskość szpitali, przychodni i aptek jest dla Ciebie ważna?",
+            "type": "range",
+            "attributes": {
+                "max": 1,
+                "min": 0
+            },
+            "labels": {
+                "max": "tak",
+                "min": "nie"
+            }
+        },
+        "culture": {
+            "question": "Bliskość kin, muzeów, teatrów jest dla Ciebie ważna?",
+            "type": "range",
+            "attributes": {
+                "max": 1,
+                "min": 0
+            },
+            "labels": {
+                "max": "tak",
+                "min": "nie"
+            }
+        },
+        "sport": {
+            "question": "Bliskość obiektów sportowych jest dla Ciebie ważna?",
+            "type": "range",
+            "attributes": {
+                "max": 1,
+                "min": 0
+            },
+            "labels": {
+                "max": "tak",
+                "min": "nie"
+            }
+        },
+        "children": {
+            "question": "Planujesz mieszkać z dziećmi?",
+            "type": "enum",
+            "options": {
+                "max": "tak",
+                "min": "nie"
+            }
+        },
+        "religion": {
+            "question": "Jakie znaczenie ma dla Ciebie bliskość kościołów i miejsc kultu?",
+            "type": "range",
+            "attributes": {
+                "max": 1,
+                "neutral": 0,
+                "min": -1
+            },
+            "labels": {
+                "max": "pozytywne",
+                "neutral": "obojętne",
+                "min": "zniechęcające"
+            }
+        },
+        "entertainment": {
+            "question": "Jakie znaczenie ma dla Ciebie bliskość knajp, restauracji, pubów?",
+            "type": "range",
+            "attributes": {
+                "max": 1,
+                "neutral": 0,
+                "min": -1
+            },
+            "labels": {
+                "max": "pozytywne",
+                "neutral": "obojętne",
+                "min": "zniechęcające"
+            }
+        },
+        "safety": {
+            "question": "Jaki jest twój stosunek do bezpieczeństwa okolicy?",
+            "type": "range",
+            "attributes": {
+                "max": 1,
+                "min": 0
+            },
+            "labels": {
+                "max": "to ważne",
+                "min": "obojętne"
+            }
+        },
+        "reason": {
+            "question": "W jakim celu chcesz kupić nieruchomość?",
+            "type": "enum",
+            "options": {
+                "investment": "inwestycja",
+                "long_term_rental": "wynajem długoterminowy",
+                "short_term_rental": "wynajem krótkoterminowy",
+                "family": "chcę zamieszkać z rodziną",
+                "alone": "chcę zamieszkać sam"
+                // TODO: inne opcje?
             }
         }
     }
