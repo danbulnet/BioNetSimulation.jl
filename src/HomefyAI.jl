@@ -1,6 +1,10 @@
-module App
+module HomefyAI
 
 using Genie, Logging, LoggingExtras
+
+include("Graph.jl")
+
+export Graph
 
 function main()
   Core.eval(Main, :(const UserApp = $(@__MODULE__)))
