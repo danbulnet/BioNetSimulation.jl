@@ -1,1 +1,0 @@
-julia -O3 -tauto --load build.jl --project
