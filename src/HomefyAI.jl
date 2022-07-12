@@ -2,6 +2,7 @@ module HomefyAI
 
 using Genie, Logging, LoggingExtras
 
+push!(LOAD_PATH, "bionet")
 include("Graph.jl")
 
 export Graph

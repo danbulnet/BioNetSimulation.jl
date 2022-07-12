@@ -4,6 +4,7 @@ authors = ["danbulnet <daniel@bulanda.net>"]
 version = "0.1.0"
 
 [deps]
+BioNet = "e6a001e8-76d5-4c1f-9da0-2db6dbad0df5"
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
 Genie = "c43c736e-a2d1-11e8-161f-af95117fbd1e"
 Inflector = "6d011eab-0732-4556-8808-e463c76bf3b6"

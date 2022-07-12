@@ -1,34 +1,34 @@
 import JSON
 
-questionsjson = r"""
+questionsjson = raw"""
     {
         "questions_keys": {
-            "test_question_1": {
+            "terrain": {
                 "type": "range",
                 "attributes": {
-                    "min": -1,
+                    "min": 0,
                     "max": 1
                 },
-                "question"=> "Przykładowe pytanie",
+                "question": "Jakie ukształtowanie terenu preferujesz?",
+                "label": {
+                    "min": "nizinne",
+                    "max": "górzyste"
+                }
+            },
+            "water": {
+                "type": "range",
+                "attributes": {
+                    "min": 0,
+                    "max": 1
+                },
+                "question": "Czy bliskość morza, jeziora lub rzeki jest dla Ciebie ważna?",
                 "label": {
                     "min": "bardzo źle",
                     "max": "dobrze"
                 }
-            },
-            "test_question_2": {
-                "type": "range",
-                "attributes": {
-                    "min": -1,
-                    "max": 1
-                },
-                "question"=> "Przykładowe pytanie 2",
-                "label": {
-                    "min": "bardzo źle",
-                    "max": "dobrze"
-                }
-            },
-        },
+            }
+        }
     }
 """
 
-questions = JSON.json(questionsjson)
+questions = JSON.parse(questionsjson)
