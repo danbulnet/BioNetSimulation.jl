@@ -19,13 +19,11 @@
             "type": "range",
             "attributes": {
                 "max": 1,
-                "neutral": 0,
-                "min": -1
+                "neutral": 0
             },
             "labels": {
                 "max": "tak",
-                "neutral": "obojętne",
-                "min": "nie"
+                "neutral": "obojętne"
             }
         },
         "transport": {
@@ -34,10 +32,7 @@
             "options": {
                 "car": "samochód",
                 "bicycle": "rower",
-                "public_transport": "komunikacja miejska", // TOOD: przedyskutować czy lepsze rozbicie
-                // "tram": "tramwaj",
-                // "metro": "metro",
-                // "bus": "autobus",
+                "public_transport": "komunikacja miejska",
                 "taxi": "taxi",
                 "train": "pociąg",
                 "airplane": "samolot" 
@@ -49,7 +44,7 @@
             "attributes": {
                 "max": 1,
                 "neutral": 0,
-                "min": 0
+                "min": -1
             },
             "labels": {
                 "max": "centrum",
@@ -167,18 +162,6 @@
                 "min": "zniechęcające"
             }
         },
-        "safety": {
-            "question": "Jaki jest twój stosunek do bezpieczeństwa okolicy?",
-            "type": "range",
-            "attributes": {
-                "max": 1,
-                "min": 0
-            },
-            "labels": {
-                "max": "to ważne",
-                "min": "obojętne"
-            }
-        },
         "reason": {
             "question": "W jakim celu chcesz kupić nieruchomość?",
             "type": "enum",
@@ -187,8 +170,8 @@
                 "long_term_rental": "wynajem długoterminowy",
                 "short_term_rental": "wynajem krótkoterminowy",
                 "family": "chcę zamieszkać z rodziną",
-                "alone": "chcę zamieszkać sam"
-                // TODO: inne opcje?
+                "alone": "chcę zamieszkać sam",
+                "holidays": "wypoczynek"
             }
         }
     }
