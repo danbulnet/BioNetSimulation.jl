@@ -36,3 +36,6 @@ Manifest.toml
 
 # profiler output
 statprof
+
+# sysimage
+sysimage/
