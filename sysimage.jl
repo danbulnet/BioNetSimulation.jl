@@ -1,4 +1,8 @@
 using PackageCompiler
+using Pkg
+
+Pkg.instantiate()
+Pkg.precompile()
 
 rootdir = @__DIR__
 
@@ -11,7 +15,9 @@ create_sysimage(
     ["BioNet"];
     sysimage_path=joinpath(rootdir, "sysimage/BioNet.so"),
     incremental=true, 
-    precompile_execution_file=precompilationsfile
+    precompile_execution_file=precompilationsfile,
+    # filter_stdlibs=true,
+    # include_transitive_dependencies=true
 )
 
 exit()

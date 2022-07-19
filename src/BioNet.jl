@@ -15,6 +15,6 @@ include("benchmark/SubtreesBenchmarks.jl")
 include("benchmark/MAGDSBenchmark.jl")
 include("simulation/Simulation.jl")
 
-greet() = print("Hello BioNet!")
+greet() = println("Hello BioNet!")
 
 end # module

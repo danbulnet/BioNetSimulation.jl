@@ -86,7 +86,7 @@ function graphsim(
 end
 
 function graphsim(
-    database::String, username::String, password::String, port::Int;
+    database::String, host::String, username::String, password::String, port::Int;
     resolution=(3700, 2000),
     camera3d=true, ssao=false,
     neuronsize=Point3(1.0, 0.7, 0.1), neurongap=2.0,
@@ -110,7 +110,7 @@ function graphsim(
 
     magds = magdsparser(
         database, username, password;
-        port=port, tablefilter=tablefilter, rowlimit=rowlimit
+        host=host,port=port, tablefilter=tablefilter, rowlimit=rowlimit
     )
     sensorsnames = sort(map(first, collect(magds.sensors)))
     sensors, totalwidth = rendersensors(magds, sensorfilter, parentscene, scenes)
