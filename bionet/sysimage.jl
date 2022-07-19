@@ -1,4 +1,3 @@
-using PackageCompiler
 using Pkg
 
 rootpath = @__DIR__
@@ -6,6 +5,8 @@ rootpath = @__DIR__
 Pkg.activate(rootpath)
 Pkg.instantiate()
 Pkg.precompile()
+
+using PackageCompiler
 
 rootdir = @__DIR__
 
