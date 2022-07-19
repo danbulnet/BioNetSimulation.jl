@@ -380,7 +380,7 @@ end
 function test()
     GC.enable(false)
     @time begin
-        graph = graph{Int}(:test, numerical)
+        graph = Graph{Int}("test", numerical)
         for i = 1:1_000
             insert!(graph, rand(1:1_000))
         end
