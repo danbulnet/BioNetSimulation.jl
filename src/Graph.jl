@@ -9,9 +9,10 @@ include("../data/questions.jl")
     Runs app which visualize a given knowledge graph
 """
 function show()
-    BioNet.Simulation.graphsim(
-        "homefyprod", "root", "szic8805", 3306;
-        camera3d=true, rowlimit=5, sensorfilter=homefyall, tablefilter=homefytabs
+    Simulation.graphsim(
+        ["/mnt/d/BioNetLabs/GrapeUp/Toyota/KnowledgeModels/repo/knowledge-models-toyota/data/carscom_prepared_04_06_2022.csv"];
+        camera3d=true, 
+        rowlimit=10, sensorfilter=Set(Symbol[])
     )
 end
 

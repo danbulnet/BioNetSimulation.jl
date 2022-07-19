@@ -13,3 +13,5 @@ Pkg.activate(rootpath)
 Pkg.develop(path=bionetpath)
 Pkg.instantiate()
 Pkg.precompile()
+
+exit()
