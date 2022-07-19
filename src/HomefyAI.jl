@@ -1,19 +1,8 @@
 module HomefyAI
 
-using Genie, Logging, LoggingExtras
-
 push!(LOAD_PATH, "bionet")
 include("Graph.jl")
 
-export Graph
-
-function main()
-  Core.eval(Main, :(const UserApp = $(@__MODULE__)))
-
-  Genie.genie(; context = @__MODULE__)
-
-  Core.eval(Main, :(const Genie = UserApp.Genie))
-  Core.eval(Main, :(using Genie))
-end
+export Graph, BioNet
 
 end

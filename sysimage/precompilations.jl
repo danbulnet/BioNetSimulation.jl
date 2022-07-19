@@ -1,5 +1,5 @@
 using HomefyAI
-using HomefyAI.BioNet
+using BioNet
 using HomefyAI.Graph
 
 Simulation.graphsim(
