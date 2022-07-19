@@ -1,4 +1,3 @@
-using PackageCompiler
 using Pkg
 
 rootdir = @__DIR__
@@ -14,6 +13,8 @@ Pkg.activate(rootdir)
 Pkg.develop(path=bionetpath)
 Pkg.instantiate()
 Pkg.precompile()
+
+using PackageCompiler
 
 precompilationsfile = joinpath(rootdir, "sysimage/precompilations.jl")
 if !isfile(precompilationsfile)
