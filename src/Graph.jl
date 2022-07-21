@@ -17,8 +17,9 @@ function safeexecute(f::Function)::Nothing
     lock(graphlock)
     try
         f()
-    catch
+    catch e
         @error "error procession safe function execution on graph with lock"
+        @error e
     finally
         unlock(graphlock)
     end

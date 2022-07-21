@@ -2,6 +2,8 @@ module MAGDSSimple
 
 export addneuron!, connect!, deactivate!, findbyname, Neuron
 
+import Base.show
+
 import ..Common: Opt, ConnectionSimple
 import ..ASAGraph
 include("NeuronSimple.jl")
@@ -107,10 +109,16 @@ function deactivate!(graph::Graph, neurons::Bool = true, sensors::Bool = true)::
     nothing
 end
 
-function Base.show(io::IO, conn::ConnectionSimple)
-    fromname = isa(conn.from, ASAGraph.Element) ? ASAGraph.name(conn.from) : name(conn.from)
-    toname = isa(conn.to, ASAGraph.Element) ? ASAGraph.name(conn.to) : name(conn.to)
-    println(fromname, " => ", toname)
+function show(io::IO, graph::Graph)
+    println("sensors", " => ", graph.sensors)
+    println("neurons", " => ", graph.neurons)
+    println("connections", " => ", graph.connections)
 end
+
+# function show(io::IO, conn::ConnectionSimple)
+#     fromname = isa(conn.from, ASAGraph.Element) ? ASAGraph.name(conn.from) : name(conn.from)
+#     toname = isa(conn.to, ASAGraph.Element) ? ASAGraph.name(conn.to) : name(conn.to)
+#     println(fromname, " => ", toname)
+# end
 
 end # module

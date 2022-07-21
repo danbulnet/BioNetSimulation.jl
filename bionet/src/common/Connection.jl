@@ -1,6 +1,8 @@
 export ConnectionDirection, oneway, bidirectional, ConnectionType
 export activation, inhibitory, Connection, ConnectionSimple, counterdown!, counterup!
 
+import Base.show
+
 include("types.jl")
 include("parameters.jl")
 include("paths.jl")
@@ -55,6 +57,6 @@ end
 
 name(neuron::AbstractNeuron) = "unknown neuron"
 
-# function Base.show(io::IO, conn::Connection)
-#     println(name(conn.from), " => ", name(conn.to), " weight: ", round.(conn.weight; digits=5))
-# end
+function Base.show(io::IO, conn::Connection)
+    println(name(conn.from), " => ", name(conn.to), " weight: ", round.(conn.weight; digits=5))
+end
