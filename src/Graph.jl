@@ -13,49 +13,39 @@ graphlock = SpinLock();
 
 estateneurons_name = :estates
 
-function safeexecute(f::Function)
+function safeexecute(f::Function)::Nothing
     lock(graphlock)
     try
         f()
     catch
-
-    end
-end
-
-function creategraph()
-    lock(graphlock)
-    try
-        global graph = MAGDSSimple.Graph()
-        graph.neurons[estateneurons_name] = Set{NeuronSimple}()
-    catch
-        @error "error creating graph with lock"
+        @error "error procession safe function execution on graph with lock"
     finally
         unlock(graphlock)
     end
     nothing
 end
 
-function addsensin(name::Symbol, ketype::DataType)
-    lock(graphlock)
-    try
+function creategraph()::Nothing
+    safeexecute() do 
+        global graph = MAGDSSimple.Graph()
+        graph.neurons[estateneurons_name] = Set{NeuronSimple}()
+    end
+end
+
+function addsensin(name::Symbol, ketype::DataType)::Nothing
+    safeexecute() do
         if haskey(graph.sensors, name)
             @warn "addsensin: sensor $name already exists"
             return
         end
         
         keytype_infered, datatype = MAGDSParser.infertype(ketype)
-        graph.sensors[name] = ASACGraph.Graph{keytype_infered}(string(name), datatype)    
-    catch
-        @error "error creating graph with lock"
-    finally
-        unlock(graphlock)
+        graph.sensors[name] = ASACGraph.Graph{keytype_infered}(string(name), datatype) 
     end
-    nothing
 end
 
-function addestate(name::String, sensors::Dict{Symbol, Any}) where T
-    lock(graphlock)
-    try
+function addestate(name::String, sensors::Dict{Symbol, Any})::Nothing where T
+    safeexecute() do
         if !isnothing(MAGDSParser.findbyname(graph.neurons[estateneurons_name], name))
             @warn "addestate: estate $name already exists"
             return
@@ -69,12 +59,7 @@ function addestate(name::String, sensors::Dict{Symbol, Any}) where T
             sensor = ASACGraph.insert!(asac, asac_keytype(sensorvalue))
             MAGDSSimple.connect!(graph, :sensor_neuron, sensor, neuron)
         end
-    catch
-        @error "error creating graph with lock"
-    finally
-        unlock(graphlock)
     end
-    nothing
 end
 
 """
