@@ -135,10 +135,16 @@ function deactivate!(graph::Graph, neurons::Bool = true, sensors::Bool = true)::
     nothing
 end
 
-function Base.show(io::IO, conn::Connection)
-    fromname = isa(conn.from, ASAGraph.Element) ? ASAGraph.name(conn.from) : name(conn.from)
-    toname = isa(conn.to, ASAGraph.Element) ? ASAGraph.name(conn.to) : name(conn.to)
-    println(fromname, " => ", toname, " weight: ", round.(conn.weight; digits=5))
+function show(io::IO, graph::Graph)
+    println("sensors", " => ", graph.sensors)
+    println("neurons", " => ", graph.neurons)
+    println("connections", " => ", graph.connections)
 end
+
+# function Base.show(io::IO, conn::Connection)
+#     fromname = isa(conn.from, ASAGraph.Element) ? ASAGraph.name(conn.from) : name(conn.from)
+#     toname = isa(conn.to, ASAGraph.Element) ? ASAGraph.name(conn.to) : name(conn.to)
+#     println(fromname, " => ", toname, " weight: ", round.(conn.weight; digits=5))
+# end
 
 end # module

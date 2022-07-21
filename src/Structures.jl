@@ -1,7 +1,7 @@
 module Structures
 
 export Option, Address, Investment, Estate, Prediction
-export Client, ClientProfilingData, Developer
+export Client, ClientProfilingData, Developer, listfields
 
 Option{T} = Union{T, Nothing}
 
@@ -104,6 +104,39 @@ mutable struct Client
     browser_name::Option{String}
     profiling_data::Option{ClientProfilingData}
     email::Option{String}
+end
+
+function listfields(object)
+    names = collect(fieldnames(typeof(object)))
+    values = []
+    for name in names
+        value = :($object.$name) |> eval
+        push!(values, value)
+    end
+    Dict{Symbol, Any}(zip(names, values))
+end
+
+function nonemptyfields(object)
+    filter(x -> !isnothing(last(x)), collect(listfields(object)))
+end
+
+function describe(estate::Estate)
+    estatefields = listfields(estate)
+    investmentfields = listfields(estate.investment)
+    addressfields = if isnothing(estate.address)
+        if isnothing(estate.investment.address)
+            Dict{Symbol, Any}()
+        else
+            listfields(estate.investment.address)
+        end
+    else
+        listfields(estate.address)
+    end
+    developerfields = if isnothing(estate.investment.developer)
+        Dict{Symbol, Any}()
+    else
+        listfields(estate.investment.developer)
+    end
 end
 
 end

@@ -5,6 +5,8 @@ import BioNet.ASACGraph.DataScale
 import BioNet.MAGDSSimple.NeuronSimple
 import Base.Threads.SpinLock
 
+using HomefyAI.Structures
+
 include("db2sensors.jl")
 include("../data/questions.jl")
 
@@ -45,15 +47,17 @@ function addsensin(name::Symbol, ketype::DataType)::Nothing
     end
 end
 
-function addestate(name::String, sensors::Dict{Symbol, Any})::Nothing where T
+function addneuron(
+    name::String, parent::Symbol, sensors::Dict{Symbol, Any}
+)::Nothing where T
     safeexecute() do
-        if !isnothing(MAGDSParser.findbyname(graph.neurons[estateneurons_name], name))
-            @warn "addestate: estate $name already exists"
+        if !isnothing(MAGDSParser.findbyname(graph.neurons[parent], name))
+            @warn "addneuron: neuron $name already exists, skipping"
             return
         end
     
-        neuron = MAGDSSimple.NeuronSimple(string(name), string(estateneurons_name))
-        push!(graph.neurons[estateneurons_name], neuron)
+        neuron = MAGDSSimple.NeuronSimple(name, string(parent))
+        push!(graph.neurons[parent], neuron)
         for (sensorname, sensorvalue) in sensors
             asac = graph.sensors[sensorname]
             asac_keytype = ASACGraph.keytype(asac)
@@ -61,6 +65,15 @@ function addestate(name::String, sensors::Dict{Symbol, Any})::Nothing where T
             MAGDSSimple.connect!(graph, :sensor_neuron, sensor, neuron)
         end
     end
+end
+
+function addestate(estate::Estate)::Nothing where T
+    estatename = estate.id * ": " * estate.investment.name * " => " * estate.name
+    for (fieldname, value) in listfields(estate)
+
+    end
+
+    addneuron(estatename, :estates, features)
 end
 
 """
