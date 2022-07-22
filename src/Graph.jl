@@ -7,7 +7,6 @@ import Base.Threads.SpinLock
 
 using HomefyAI.Structures
 
-include("db2sensors.jl")
 include("../data/questions.jl")
 
 graph = nothing

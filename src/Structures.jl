@@ -3,6 +3,8 @@ module Structures
 export Option, Address, Investment, Estate, Prediction
 export Client, ClientProfilingData, Developer, listfields
 
+include("estatefilter.jl")
+
 Option{T} = Union{T, Nothing}
 
 mutable struct Address
@@ -106,7 +108,91 @@ mutable struct Client
     email::Option{String}
 end
 
-function listfields(object)
+function estatesample()::Estate
+    address = Address(
+        1,
+        "PL",
+        "małopolska",
+        nothing,
+        "Kraków",
+        "Cieszyńska",
+        6,
+        nothing,
+        23,
+        nothing,
+        50.075275,
+        19.930216,
+        1658379570,
+        1658379580,
+        "30-015"
+    )
+
+    developer = Developer(
+        1,
+        "Murapol",
+        "info@murapol.pl",
+        nothing,
+        nothing,
+        nothing,
+        nothing,
+        nothing,
+        nothing,
+        nothing,
+        false,
+        1658379570,
+        1658379580
+    )
+
+    investment = Investment(
+        1,
+        "Apartamenty Cieszyńska",
+        String["gallery", "interactivemap"],
+        nothing,
+        nothing,
+        developer,
+        address,
+        1658379570,
+        1658379580,
+        true
+    )
+
+    estate = Estate(
+        1,
+        "6/23",
+        nothing,
+        "free",
+        "luxuryapartment",
+        "terraced",
+        nothing,
+        2012,
+        "finished",
+        "inuse",
+        "readytolive",
+        "brick",
+        "centralcity",
+        "urban",
+        1_150_000,
+        66.4,
+        5,
+        4,
+        3,
+        1,
+        String["balcony", "loggia", "spaceingarage"],
+        String["airconditioning", "internetwifi", "cabletv", "lift"],
+        String["kitchenette", "functionallayout",],
+        nothing,
+        investment,
+        address,
+        nothing,
+        1658379570,
+        1658379580,
+        0
+    )
+
+    estate
+end
+
+function listfields(object)::Dict{Symbol, Any}
     names = collect(fieldnames(typeof(object)))
     values = []
     for name in names
@@ -116,27 +202,42 @@ function listfields(object)
     Dict{Symbol, Any}(zip(names, values))
 end
 
-function nonemptyfields(object)
-    filter(x -> !isnothing(last(x)), collect(listfields(object)))
+function nonemptyfields(object)::Dict{Symbol, Any}
+    Dict{Symbol, Any}(filter(x -> !isnothing(last(x)), listfields(object)))
 end
 
 function describe(estate::Estate)
-    estatefields = listfields(estate)
-    investmentfields = listfields(estate.investment)
+    estatefields = nonemptyfields(estate)
+    estatefields = filter(x -> first(x) in estatefilter, estatefields)
+    
+    investmentfields = nonemptyfields(estate.investment)
+    investmentfields = filter(x -> first(x) in investmentfilter, investmentfields)
+    investmentfields = Dict{Symbol, Any}(map(
+        x -> (Symbol("investment_$(first(x))") => last(x)), collect(investmentfields))
+    )
+    
     addressfields = if isnothing(estate.address)
         if isnothing(estate.investment.address)
             Dict{Symbol, Any}()
         else
-            listfields(estate.investment.address)
+            nonemptyfields(estate.investment.address)
         end
     else
-        listfields(estate.address)
+        nonemptyfields(estate.address)
     end
+    addressfields = filter(x -> first(x) in addressfilter, addressfields)
+
     developerfields = if isnothing(estate.investment.developer)
         Dict{Symbol, Any}()
     else
-        listfields(estate.investment.developer)
+        nonemptyfields(estate.investment.developer)
     end
+    developerfields = filter(x -> first(x) in developerfilter, developerfields)
+    developerfields = Dict{Symbol, Any}(map(
+        x -> (Symbol("developer_$(first(x))") => last(x)), collect(developerfields))
+    )
+
+    merge(estatefields, investmentfields, addressfields, developerfields)
 end
 
 end
