@@ -17,18 +17,26 @@ graphlock_backup = SpinLock();
 
 estateneurons_name = :estates
 
+function errortest()
+    safeexecute() do 
+        global graph = MAGDSSimple.Graph()
+        graph.neurons[estateneurons_name] = Set{NeuronSimple}()
+        error("test error")
+    end
+end
+
 function safeexecute(f::Function)::Nothing
     try
         lock(graphlock)
         lock(graphlock_backup)
         f()
-        graph_backup = deepcopy(graph)
+        global graph_backup = deepcopy(graph)
     catch e
         @error(
             "error procession safe function execution on graph with lock",
             exception=(e, catch_backtrace())
         )
-        graph = deepcopy(graph_backup)
+        global graph = deepcopy(graph_backup)
     finally
         unlock(graphlock)
         unlock(graphlock_backup)
@@ -44,7 +52,7 @@ function creategraph()::Nothing
     
     estate = estatesample()
     for (fieldname, value) in describe(estate)
-        println(fieldname)
+        @info "sensor $fieldname has been added"
         addsensin(fieldname, typeof(value))
     end
 end
@@ -92,6 +100,7 @@ function addestate(estate::Estate)::Nothing where T
     estatename = "$(estate.id): $(estate.investment.name) => $(estate.name)"
     features = describe(estate)
     addneuron(estatename, :estates, features)
+    @info "\"$estatename\" has been added to the graph"
 end
 
 """
@@ -105,7 +114,7 @@ function addestates(estates::Vector{Estate})
     for estate in estates
         addestate(estate)
     end
-    println("added $(length(estates)) estates to the graph")
+    @info "$(length(estates)) estates have been added to the graph"
 end
 
 end
