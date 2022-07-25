@@ -26,6 +26,24 @@ mutable struct Address
     post_code::String
 end
 
+mutable struct Address4
+    id::UInt64
+    country::Vector{Char}
+    voivodeship::Char
+    district::Char
+    town::Char
+    street::Char
+    buildingnumber::UInt16
+    buildingletter::Char
+    flatnumber::UInt16
+    flatletter::Char
+    lat::Float32
+    long::Float32
+    created_at::UInt64
+    updated_at::UInt64
+    post_code::Char
+end
+
 mutable struct Developer
     id::UInt64
     name::String

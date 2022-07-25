@@ -17,14 +17,6 @@ graphlock_backup = SpinLock();
 
 estateneurons_name = :estates
 
-function errortest()
-    safeexecute() do 
-        global graph = MAGDSSimple.Graph()
-        graph.neurons[estateneurons_name] = Set{NeuronSimple}()
-        error("test error")
-    end
-end
-
 function safeexecute(f::Function)::Nothing
     try
         lock(graphlock)
@@ -96,9 +88,26 @@ function addneuron(
     end
 end
 
-function addestate(estate::Estate)::Nothing where T
+function addestate(estate::Estate)::Nothing
     estatename = "$(estate.id): $(estate.investment.name) => $(estate.name)"
     features = describe(estate)
+    addneuron(estatename, :estates, features)
+    @info "\"$estatename\" has been added to the graph"
+end
+
+function addestate(;kwargs...)::Nothing
+    id = kwargs[:id]
+    name = kwargs[:name]
+    investmentname = kwargs[:investment_name]
+    estatename = "$id: $investmentname => $name"
+
+    features = Dict{Symbol, Any}()
+    for (key, value) in kwargs
+        if key in fieldfilter
+            features[key] = value
+        end
+    end
+
     addneuron(estatename, :estates, features)
     @info "\"$estatename\" has been added to the graph"
 end

@@ -1,4 +1,4 @@
-export homefydevelopers, homefyclients, homefyinvestment, homefyaddresses, homefyestates
+export homefydevelopers, homefyclients, homefyinvestment, homefyaddresses, homefyestates, fieldfilter
 
 tabsfilter = [
     :homefy_addresses, 
@@ -8,8 +8,6 @@ tabsfilter = [
     :homefy_estates_predictions, 
     :homefy_investments
 ]
-
-developerfilter = [:name, :isagency]
 
 clientfilter = [
     :email,
@@ -32,7 +30,11 @@ addressfilter = [
     :long
 ]
 
+developerfilter = [:name, :isagency]
+developerfilter_prefix = Symbol.(map(x -> "developer_$x", developerfilter))
+
 investmentfilter = [:name, :presentation, :views, :active]
+investmentfilter_prefix = Symbol.(map(x -> "investment_$x", investmentfilter))
 
 estatefilter = [
     :name, 
@@ -62,3 +64,11 @@ estatefilter = [
     :updated_at,
     :government_program_1
 ]
+
+
+fieldfilter = union(
+    Set(estatefilter), 
+    Set(addressfilter), 
+    Set(developerfilter_prefix), 
+    Set(investmentfilter_prefix)
+) |> collect
