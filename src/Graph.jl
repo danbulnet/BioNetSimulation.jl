@@ -1,28 +1,37 @@
 module Graph
 
+import Base.Threads.SpinLock
+
 import BioNet: ASACGraph, MAGDSParser, MAGDSSimple, Simulation
 import BioNet.ASACGraph.DataScale
 import BioNet.MAGDSSimple.NeuronSimple
-import Base.Threads.SpinLock
 
 using HomefyAI.Structures
 
 include("../data/questions.jl")
 
 graph = nothing
+graph_backup = nothing
 graphlock = SpinLock();
+graphlock_backup = SpinLock();
 
 estateneurons_name = :estates
 
 function safeexecute(f::Function)::Nothing
-    lock(graphlock)
     try
+        lock(graphlock)
+        lock(graphlock_backup)
         f()
+        graph_backup = deepcopy(graph)
     catch e
-        @error "error procession safe function execution on graph with lock"
-        @error e
+        @error(
+            "error procession safe function execution on graph with lock",
+            exception=(e, catch_backtrace())
+        )
+        graph = deepcopy(graph_backup)
     finally
         unlock(graphlock)
+        unlock(graphlock_backup)
     end
     nothing
 end
@@ -31,6 +40,12 @@ function creategraph()::Nothing
     safeexecute() do 
         global graph = MAGDSSimple.Graph()
         graph.neurons[estateneurons_name] = Set{NeuronSimple}()
+    end
+    
+    estate = estatesample()
+    for (fieldname, value) in describe(estate)
+        println(fieldname)
+        addsensin(fieldname, typeof(value))
     end
 end
 
@@ -60,18 +75,22 @@ function addneuron(
         for (sensorname, sensorvalue) in sensors
             asac = graph.sensors[sensorname]
             asac_keytype = ASACGraph.keytype(asac)
-            sensor = ASACGraph.insert!(asac, asac_keytype(sensorvalue))
-            MAGDSSimple.connect!(graph, :sensor_neuron, sensor, neuron)
+            if typeof(sensorvalue) <: AbstractArray
+                for el in sensorvalue
+                    sensor = ASACGraph.insert!(asac, asac_keytype(el))
+                    MAGDSSimple.connect!(graph, :sensor_neuron, sensor, neuron)
+                end
+            else
+                sensor = ASACGraph.insert!(asac, asac_keytype(sensorvalue))
+                MAGDSSimple.connect!(graph, :sensor_neuron, sensor, neuron)
+            end
         end
     end
 end
 
 function addestate(estate::Estate)::Nothing where T
-    estatename = estate.id * ": " * estate.investment.name * " => " * estate.name
-    for (fieldname, value) in listfields(estate)
-
-    end
-
+    estatename = "$(estate.id): $(estate.investment.name) => $(estate.name)"
+    features = describe(estate)
     addneuron(estatename, :estates, features)
 end
 
@@ -82,8 +101,11 @@ function show()
     nothing
 end
 
-function addestates(graph::MAGDSSimple.Graph, estates)
-    println(estates)
+function addestates(estates::Vector{Estate})
+    for estate in estates
+        addestate(estate)
+    end
+    println("added $(length(estates)) estates to the graph")
 end
 
 end

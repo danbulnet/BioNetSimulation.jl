@@ -1,7 +1,8 @@
 module Structures
 
 export Option, Address, Investment, Estate, Prediction
-export Client, ClientProfilingData, Developer, listfields
+export Client, ClientProfilingData, Developer
+export listfields, estatesample, describe
 
 include("estatefilter.jl")
 
@@ -108,7 +109,7 @@ mutable struct Client
     email::Option{String}
 end
 
-function estatesample()::Estate
+function estatesample(id::Int=1)::Estate
     address = Address(
         1,
         "PL",
@@ -157,7 +158,7 @@ function estatesample()::Estate
     )
 
     estate = Estate(
-        1,
+        id,
         "6/23",
         nothing,
         "free",
@@ -206,7 +207,7 @@ function nonemptyfields(object)::Dict{Symbol, Any}
     Dict{Symbol, Any}(filter(x -> !isnothing(last(x)), listfields(object)))
 end
 
-function describe(estate::Estate)
+function describe(estate::Estate)::Dict{Symbol, Any}
     estatefields = nonemptyfields(estate)
     estatefields = filter(x -> first(x) in estatefilter, estatefields)
     
