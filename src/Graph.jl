@@ -17,23 +17,28 @@ graphlock_backup = SpinLock();
 
 estateneurons_name = :estates
 
-function safeexecute(f::Function)::Nothing
+function safeexecute(f::Function)::Bool
+    result = true
     try
         lock(graphlock)
         lock(graphlock_backup)
-        f()
+        fret = f()
+        if fret isa Bool
+            result = fret
+        end
         global graph_backup = deepcopy(graph)
     catch e
         @error(
-            "error procession safe function execution on graph with lock",
+            "error processing safe function execution on graph with lock",
             exception=(e, catch_backtrace())
         )
         global graph = deepcopy(graph_backup)
+        result = false
     finally
         unlock(graphlock)
         unlock(graphlock_backup)
     end
-    nothing
+    result
 end
 
 function creategraph()::Nothing
@@ -47,6 +52,7 @@ function creategraph()::Nothing
         @info "sensor $fieldname has been added"
         addsensin(fieldname, typeof(value))
     end
+    nothing
 end
 
 function addsensin(name::Symbol, ketype::DataType)::Nothing
@@ -59,15 +65,16 @@ function addsensin(name::Symbol, ketype::DataType)::Nothing
         keytype_infered, datatype = MAGDSParser.infertype(ketype)
         graph.sensors[name] = ASACGraph.Graph{keytype_infered}(string(name), datatype) 
     end
+    nothing
 end
 
 function addneuron(
     name::String, parent::Symbol, sensors::Dict{Symbol, Any}
-)::Nothing where T
+)::Bool
     safeexecute() do
         if !isnothing(MAGDSParser.findbyname(graph.neurons[parent], name))
             @warn "addneuron: neuron $name already exists, skipping"
-            return
+            return false
         end
     
         neuron = MAGDSSimple.NeuronSimple(name, string(parent))
@@ -85,14 +92,16 @@ function addneuron(
                 MAGDSSimple.connect!(graph, :sensor_neuron, sensor, neuron)
             end
         end
+        true
     end
 end
 
 function addestate(estate::Estate)::Nothing
     estatename = "$(estate.id): $(estate.investment.name) => $(estate.name)"
     features = describe(estate)
-    addneuron(estatename, :estates, features)
-    @info "\"$estatename\" has been added to the graph"
+    if addneuron(estatename, :estates, features)
+        @info "\"$estatename\" has been added to the graph"
+    end
 end
 
 function addestate(;kwargs...)::Nothing
@@ -108,8 +117,9 @@ function addestate(;kwargs...)::Nothing
         end
     end
 
-    addneuron(estatename, :estates, features)
-    @info "\"$estatename\" has been added to the graph"
+    if addneuron(estatename, :estates, features)
+        @info "\"$estatename\" has been added to the graph"
+    end
 end
 
 """
