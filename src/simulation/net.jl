@@ -22,7 +22,7 @@ function graphsim(
     neuroncolorstart=HSV(70, 0.38, 1), neuroncolorstop=HSV(-180, 0.38, 1),
     toggleheight=25, paddingcoeff=1.28, 
     connectorcolorstart=colorant"honeydew4", connectorcolorend=colorant"honeydew2",
-    sensorfilter::Set{Symbol}=Set(),
+    sensorfilter::Set{Symbol}=Set{Symbol}(),
 )
     set_theme!(theme_black(), resolution=resolution)
     GLMakie.enable_SSAO[] = ssao
