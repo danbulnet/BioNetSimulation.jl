@@ -4,10 +4,9 @@ include("Node.jl")
 
 using Dates
 using DataStructures
-import Base.keytype
-import Base.insert!
+import Base: keytype, insert!, range
 
-export keytype, range, search, insert!, printgraph, listelements, deactivate!, winner, weightedmean, test
+export range, search, insert!, printgraph, listelements, deactivate!, winner, weightedmean, test
 
 mutable struct Graph{Key} <: AbstractSensoryField
     name::String
@@ -380,7 +379,7 @@ end
 function test()
     GC.enable(false)
     @time begin
-        graph = graph{Int}(:test, numerical)
+        graph = Graph{Int}("test", numerical)
         for i = 1:1_000
             insert!(graph, rand(1:1_000))
         end
