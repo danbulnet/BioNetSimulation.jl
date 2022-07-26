@@ -15,6 +15,62 @@ import BioNet.ASAGraph
 import BioNet.ASACGraph: AbstractSensor, id
 
 function graphsim(
+    magds::MAGDSSimple.Graph;
+    resolution=(3700, 2000),
+    camera3d=true, ssao=false,
+    neuronsize=Point3(1.0, 0.7, 0.1), neurongap=2.0,
+    neuroncolorstart=HSV(70, 0.38, 1), neuroncolorstop=HSV(-180, 0.38, 1),
+    toggleheight=25, paddingcoeff=1.28, 
+    connectorcolorstart=colorant"honeydew4", connectorcolorend=colorant"honeydew2",
+    sensorfilter::Set{Symbol}=Set(),
+)
+    set_theme!(theme_black(), resolution=resolution)
+    GLMakie.enable_SSAO[] = ssao
+
+    figure, parentscene, scenes, camera = createscenes(resolution, camera3d)
+
+    sensorsnames = sort(map(first, collect(magds.sensors)))
+    sensors, totalwidth = rendersensors(magds, sensorfilter, parentscene, scenes)
+
+    r, neurons = renderneurons(
+        magds, parentscene, scenes, neuronsize, neurongap, paddingcoeff,
+        neuroncolorstart, neuroncolorstop
+    )
+
+    r2l = circler2l(r * √paddingcoeff)
+    maxwidth = max(totalwidth, r2l)
+    rdiff = r2l - totalwidth
+    sensorpadding = rdiff > 0 ? rdiff / length(sensors) : 0
+    transformsensors(sensors, sensorpadding, maxwidth, scenes)
+
+    conncections = connecgraph(
+        magds, scenes, neurons, sensors, sensorfilter, connectorcolorstart, connectorcolorend
+    )
+
+    toggles = sensortoggles(figure, resolution, sensorsnames, sensorfilter, toggleheight)
+    rerenderbutton = toggles[:rerenderbutton]
+    restorebutton = toggles[:restorebutton]
+    on(rerenderbutton.clicks) do _
+        selectedtoggles = activetoggles(toggles)
+    end
+    on(restorebutton.clicks; update=true) do _
+        println("restorebutton.clicks")
+        # delete!(first(toggles[:toggles]))
+        # for sensorname in keys(sensors)
+        #     delete!(figure, sensors[sensorname][:label][:node])
+        # end
+        restoretoggles(toggles, sensorfilter)
+        # display(figure)
+    end
+
+    println(activetoggles(toggles))
+
+    center!(parentscene.scene)
+    
+    figure
+end
+
+function graphsim(
     dffiles::Vector{String};
     resolution=(3700, 2000),
     camera3d=true, ssao=false,
