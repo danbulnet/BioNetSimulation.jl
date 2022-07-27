@@ -33,7 +33,7 @@ addressfilter = [
 developerfilter = [:name, :isagency]
 developerfilter_prefix = Symbol.(map(x -> "developer_$x", developerfilter))
 
-investmentfilter = [:name, :presentation, :views, :active]
+investmentfilter = [:name, :presentation, :active]
 investmentfilter_prefix = Symbol.(map(x -> "investment_$x", investmentfilter))
 
 estatefilter = [
@@ -59,7 +59,6 @@ estatefilter = [
     :functionalities,
     :presentation,
     :builtyear,
-    :views,
     :created_at,
     :updated_at,
     :government_program_1
