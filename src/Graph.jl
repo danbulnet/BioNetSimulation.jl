@@ -49,8 +49,10 @@ function creategraph()::Nothing
     
     estate = estatesample()
     for (fieldname, value) in describe(estate)
-        @info "sensor $fieldname has been added"
-        addsensin(fieldname, typeof(value))
+        if fieldname in fieldfilter
+            @info "sensor $fieldname has been added"
+            addsensin(fieldname, typeof(value))
+        end
     end
     nothing
 end
@@ -110,15 +112,21 @@ function addestate(;kwargs...)::Nothing
     investmentname = kwargs[:investment_name]
     estatename = "$id: $investmentname => $name"
 
+    allnothing = true
     features = Dict{Symbol, Any}()
     for (key, value) in kwargs
-        if key in fieldfilter
+        if !isnothing(value) && key in fieldfilter
             features[key] = value
+            allnothing = false
         end
     end
 
-    if addneuron(estatename, :estates, features)
-        @info "\"$estatename\" has been added to the graph"
+    if !allnothing 
+        if addneuron(estatename, :estates, features)
+            @info "\"$estatename\" has been added to the graph"
+        end
+    else
+        @warn "\"$estatename\" has all sensors == nothing, skipping"
     end
 end
 

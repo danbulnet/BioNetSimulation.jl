@@ -21,43 +21,25 @@ mutable struct Address
     flatletter::Option{String}
     lat::Option{Float32}
     long::Option{Float32}
-    created_at::UInt64
-    updated_at::UInt64
-    post_code::String
-end
-
-mutable struct Address4
-    id::UInt64
-    country::Vector{Char}
-    voivodeship::Char
-    district::Char
-    town::Char
-    street::Char
-    buildingnumber::UInt16
-    buildingletter::Char
-    flatnumber::UInt16
-    flatletter::Char
-    lat::Float32
-    long::Float32
-    created_at::UInt64
-    updated_at::UInt64
-    post_code::Char
+    createdat::UInt64
+    updatedat::UInt64
+    postcode::String
 end
 
 mutable struct Developer
     id::UInt64
     name::String
     email::String
-    email_verified_at::Option{UInt64}
+    email_verifiedat::Option{UInt64}
     webpage::Option{String}
     desctiption::Option{String}
     info::Option{String}
-    contact_email::Option{String}
+    contactemail::Option{String}
     phone::Option{String}
     address::Option{Address}
-    is_agency::Bool
-    created_at::UInt64
-    updated_at::UInt64
+    isagency::Bool
+    createdat::UInt64
+    updatedat::UInt64
 end
 
 mutable struct Investment
@@ -68,8 +50,8 @@ mutable struct Investment
     desctiption::Option{String}
     developer::Developer
     address::Option{Address}
-    created_at::UInt64
-    updated_at::UInt64
+    createdat::UInt64
+    updatedat::UInt64
     active::UInt8
 end
 
@@ -81,6 +63,7 @@ end
 mutable struct Estate
     id::UInt64
     name::String
+    presentation::Option{Vector{String}}
     desctiption::Option{String}
     availability::Option{String}
     estatetype::Option{String}
@@ -106,9 +89,9 @@ mutable struct Estate
     investment::Investment
     address::Option{Address}
     predictions::Option{Vector{Prediction}}
-    created_at::UInt64
-    updated_at::UInt64
-    government_program_1::UInt8
+    createdat::UInt64
+    updatedat::UInt64
+    governmentprogram_1::UInt8
 end
 
 mutable struct ClientProfilingData
@@ -119,11 +102,11 @@ end
 
 mutable struct Client
     id::UInt64
-    browser_user_agent::Option{String}
-    browser_language::Option{String}
-    browser_platform::Option{String}
-    browser_name::Option{String}
-    profiling_data::Option{ClientProfilingData}
+    browser_useragent::Option{String}
+    browserlanguage::Option{String}
+    browserplatform::Option{String}
+    browsername::Option{String}
+    profilingdata::Option{ClientProfilingData}
     email::Option{String}
 end
 
@@ -132,13 +115,13 @@ function estatesample(id::Int=1)::Estate
         1,
         "PL",
         "małopolska",
-        nothing,
+        "krakowski",
         "Kraków",
         "Cieszyńska",
         6,
-        nothing,
+        "",
         23,
-        nothing,
+        "",
         50.075275,
         19.930216,
         1658379570,
@@ -150,13 +133,13 @@ function estatesample(id::Int=1)::Estate
         1,
         "Murapol",
         "info@murapol.pl",
-        nothing,
-        nothing,
-        nothing,
-        nothing,
-        nothing,
-        nothing,
-        nothing,
+        0,
+        "",
+        "",
+        "",
+        "",
+        "",
+        address,
         false,
         1658379570,
         1658379580
@@ -166,8 +149,8 @@ function estatesample(id::Int=1)::Estate
         1,
         "Apartamenty Cieszyńska",
         String["gallery", "interactivemap"],
-        nothing,
-        nothing,
+        "",
+        "",
         developer,
         address,
         1658379570,
@@ -178,11 +161,12 @@ function estatesample(id::Int=1)::Estate
     estate = Estate(
         id,
         "6/23",
-        nothing,
+        String["gallery", "interactivemap"],
+        "",
         "free",
         "luxuryapartment",
         "terraced",
-        nothing,
+        "",
         2012,
         "finished",
         "inuse",
@@ -199,10 +183,10 @@ function estatesample(id::Int=1)::Estate
         String["balcony", "loggia", "spaceingarage"],
         String["airconditioning", "internetwifi", "cabletv", "lift"],
         String["kitchenette", "functionallayout",],
-        nothing,
+        "",
         investment,
         address,
-        nothing,
+        Prediction[],
         1658379570,
         1658379580,
         0

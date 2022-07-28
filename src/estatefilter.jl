@@ -11,10 +11,10 @@ tabsfilter = [
 
 clientfilter = [
     :email,
-    :browser_language,
-    :browser_name,
-    :browser_platform,
-    :profiling_data
+    :browserlanguage,
+    :browsername,
+    :browserplatform,
+    :profilingdata
 ]
 
 addressfilter = [
@@ -59,9 +59,9 @@ estatefilter = [
     :functionalities,
     :presentation,
     :builtyear,
-    :created_at,
-    :updated_at,
-    :government_program_1
+    :createdat,
+    :updatedat,
+    :governmentprogram_1
 ]
 
 
