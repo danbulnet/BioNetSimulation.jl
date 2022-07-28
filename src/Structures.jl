@@ -91,7 +91,7 @@ mutable struct Estate
     predictions::Option{Vector{Prediction}}
     createdat::UInt64
     updatedat::UInt64
-    governmentprogram_1::UInt8
+    governmentprograms::Option{Vector{String}}
 end
 
 mutable struct ClientProfilingData
@@ -189,7 +189,7 @@ function estatesample(id::Int=1)::Estate
         Prediction[],
         1658379570,
         1658379580,
-        0
+        String[]
     )
 
     estate

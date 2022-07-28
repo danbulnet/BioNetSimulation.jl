@@ -61,7 +61,7 @@ estatefilter = [
     :builtyear,
     :createdat,
     :updatedat,
-    :governmentprogram_1
+    :governmentprograms
 ]
 
 
