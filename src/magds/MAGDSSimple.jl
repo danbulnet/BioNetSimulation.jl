@@ -5,7 +5,7 @@ export addneuron!, connect!, deactivate!, findbyname, Neuron
 import Base.show
 
 import ..Common: Opt, ConnectionSimple
-import ..ASAGraph
+import ..ASACGraph.deactivate!
 include("NeuronSimple.jl")
 
 struct Graph <: Common.AbstractGraph
