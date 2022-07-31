@@ -309,7 +309,7 @@ function winner(graph::Graph{Key})::Opt{Element{Key}} where Key
     el = search(graph, graph.minkey)
     winner = el
     
-    while !isnothing(el)
+    while !isnothing(el.next)
         el = el.next.element
         if el.activation > winner.activation
             winner = el
@@ -328,17 +328,21 @@ function weightedmean(graph::Graph{Key})::Opt{Int64} where Key <: Number
     end
     el = search(graph, graph.minkey)
 
-    if isnothing(el.next)
+    if isnothing(el)
         return nothing
     end
 
-    while !isnothing(el)
+    while true
         activation = el.activation
         if !isnan(activation) && !isinf(activation)
             sum += el.key * activation
             weightsum += activation
         end
-        el = el.next.element
+        if isnothing(el.next)
+            break
+        else
+            el = el.next.element
+        end
     end
 
     round(Int64, sum / weightsum)
@@ -350,10 +354,14 @@ function deactivate!(graph::Graph{Key})::Nothing where Key
     end
 
     el = search(graph, graph.minkey)
-
-    while !isnothing(el)
+    
+    if !isnothing(el)
         deactivate!(el)
+    end
+
+    while !isnothing(el.next)
         el = el.next.element
+        deactivate!(el)
     end
     
     nothing
