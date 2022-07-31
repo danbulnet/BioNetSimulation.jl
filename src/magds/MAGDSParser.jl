@@ -43,6 +43,11 @@ function df2magds(dfs::Dict{Symbol, DataFrame}; rowlimit::Int=0)::MAGDSSimple.Gr
 
         nrows = rowlimit > 0 ? min(rowlimit, length(rows)) : length(rows)
         for i = 1:nrows
+            if i == 1 || i % 100 == 0
+                print("\e[2K")
+                print("\e[1G")
+                print(i)
+            end
             neuron = MAGDSSimple.NeuronSimple("$(dfname)_$i", string(dfname))
             push!(graph.neurons[Symbol(dfname)], neuron)
             for (colindex, column) in enumerate(columns)
