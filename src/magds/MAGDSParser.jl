@@ -34,7 +34,7 @@ function df2magds(dfs::Dict{Symbol, DataFrame}; rowlimit::Int=0)::MAGDSSimple.Gr
                 elseif coltype <: AbstractString
                     datatype = categorical
                     coltype = String
-                elseif coltype <: <: Dates.DateTime 
+                elseif coltype <: Dates.DateTime 
                     datatype = ordinal
                 end
                 graph.sensors[column] = ASACGraph.Graph{coltype}(string(column), datatype)

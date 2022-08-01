@@ -115,11 +115,11 @@ function activatesimple!(element::Element, signal::Float64 = 1.0)::Nothing
 end
 
 function activate!(
-    element::Element{Key}, 
+    element::Element, 
     signal::Float64 = 1.0, 
     forward::Bool = true, 
     neuronmode::Bool = false
-)::Set{AbstractNeuron} where Key
+)::Set{AbstractNeuron}
     element.activation += signal
     if element.activation >= Common.NEURON_ACTIVATION_THRESHOLD
         element.state = active
