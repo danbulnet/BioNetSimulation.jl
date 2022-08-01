@@ -28,16 +28,10 @@ function df2magds(dfs::Dict{Symbol, DataFrame}; rowlimit::Int=0)::MAGDSSimple.Gr
 
         for (colindex, column) in enumerate(columns)
             if !(haskey(graph.sensors, column))
-                coltype = columntypes[colindex]
-                if coltype <: Number
-                    datatype = numerical
-                elseif coltype <: AbstractString
-                    datatype = categorical
-                    coltype = String
-                elseif coltype <: Dates.DateTime 
-                    datatype = ordinal
-                end
-                graph.sensors[column] = ASACGraph.Graph{coltype}(string(column), datatype)
+                coltype, datatype = infertype(columntypes[colindex])
+                graph.sensors[column] = ASACGraph.Graph{coltype}(
+                    string(column), datatype
+                )
             end
         end
 
@@ -49,14 +43,20 @@ function df2magds(dfs::Dict{Symbol, DataFrame}; rowlimit::Int=0)::MAGDSSimple.Gr
             neuron = MAGDSSimple.NeuronSimple("$(dfname)_$i", string(dfname))
             push!(graph.neurons[Symbol(dfname)], neuron)
             for (colindex, column) in enumerate(columns)
-                value = if columntypes[colindex] <: AbstractString 
-                    string(rows[i][column])
-                else 
-                    rows[i][column]
-                end
+                coltype, _ = infertype(columntypes[colindex])
+                value = rows[i][column]
                 if !ismissing(value)
-                    sensor = insert!(graph.sensors[column], value)
-                    MAGDSSimple.connect!(graph, :sensor_neuron, sensor, neuron)
+                    if typeof(value) <: AbstractArray
+                        for el in value
+                            if !ismissing(el)
+                                sensor = insert!(graph.sensors[column], coltype(el))
+                                MAGDSSimple.connect!(graph, :sensor_neuron, sensor, neuron)
+                            end
+                        end
+                    else
+                        sensor = insert!(graph.sensors[column], coltype(value))
+                        MAGDSSimple.connect!(graph, :sensor_neuron, sensor, neuron)
+                    end
                 end
             end
         end
