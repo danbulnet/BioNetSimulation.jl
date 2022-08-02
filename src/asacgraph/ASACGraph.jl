@@ -151,8 +151,10 @@ function insert!(graph::Graph{Key}, key::Key)::Element{Key} where Key
                 graph.minkey = graph.maxkey = key
             elseif key < graph.minkey
                 graph.minkey = key
+                updateweights(graph)
             elseif key > graph.maxkey
                 graph.maxkey = key
+                updateweights(graph)
             end
 
             next::Opt{Element{Key}} = nothing
@@ -193,6 +195,20 @@ function insert!(graph::Graph{Key}, key::Key)::Element{Key} where Key
             node = node.children[index]
         end
     end
+end
+
+function updateweights(graph::Graph{Key})::Nothing where Key
+    graphrange = range(graph)
+    el = search(graph, graph.minkey)
+    while !isnothing(el.next)
+        weight = 1 - abs(el.key - el.next.element.key) / graphrange
+
+        el.next = (element = el.next.element, weight = weight)
+        el.next.element.prev = (element = el, weight = weight)
+
+        el = el.next.element
+    end
+    nothing
 end
 
 function printgraph(graph::Graph{Key}) where Key
@@ -370,7 +386,7 @@ end
 function test()
     GC.enable(false)
     @time begin
-        graph = graph{Int}(:test, numerical)
+        graph = Graph{Int}("test", numerical)
         for i = 1:1_000
             insert!(graph, rand(1:1_000))
         end
@@ -383,7 +399,7 @@ end
 function asacgraphsample(n=50)
     graph = Graph{Int}("sample", numerical)
     for i = 1:n
-        insert!(graph, rand(1:999))
+        insert!(graph, i)
     end
     graph
 end

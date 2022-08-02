@@ -55,7 +55,7 @@ name(element::Element) = string("[sensor: ", element.key, "(", element.counter, 
 
 id(element::Element) = (Symbol(element.parent.name), Symbol(element.key))
 
-treename(el::Element)::Symbol = el.parent.name
+treename(el::Element)::String = el.parent.name
 
 datatype(el::Element)::DataScale = el.parent.datatype
 
@@ -135,8 +135,8 @@ function activate!(
         el = element
         while !isnothing(el.next) && el.activation > Common.INTERELEMENT_ACTIVATION_THRESHOLD
             el.next.element.activation += el.next.weight ^ Common.INTERELEMENT_WEIGHT_POWER * el.activation
-            # if (treename(element) != :price)
-            #     println("next", el.next)
+            # if (treename(element) != "price")
+            #     println("next", el.next, " ", el.activation)
             # end
             el = el.next.element
             if el.activation >= Common.NEURON_ACTIVATION_THRESHOLD
@@ -150,8 +150,8 @@ function activate!(
         el = element
         while !isnothing(el.prev) && el.activation > Common.INTERELEMENT_ACTIVATION_THRESHOLD
             el.prev.element.activation += el.prev.weight ^ Common.INTERELEMENT_WEIGHT_POWER * el.activation
-            # if (treename(element) != :price)
-            #     println("prev", el.prev)
+            # if (treename(element) != "price")
+            #     println("prev", el.prev, " ", el.activation)
             # end
             el = el.prev.element
             if el.activation >= Common.NEURON_ACTIVATION_THRESHOLD
@@ -172,7 +172,7 @@ function activate!(
                 signal = sign * connection.from.activation * connection.weight
             end
 
-            activate!(connection.to, signal, forward)
+            activate!(connection.to, signal, false)
             push!(outneurons, connection.to)
         end
     end
