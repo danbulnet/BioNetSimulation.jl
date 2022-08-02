@@ -1,2 +1,0 @@
-#!/bin/sh
-julia -O3 -tauto --project -e "using Pkg; Pkg.test(\"HomefyAI\")" -J$(dirname $0)/../sysimage/HomefyAI.so

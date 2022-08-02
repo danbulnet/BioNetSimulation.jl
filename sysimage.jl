@@ -1,20 +1,14 @@
 using Pkg
 
-rootdir = @__DIR__
+rootpath = @__DIR__
 
-bionetpath = joinpath(rootdir, "bionet")
-push!(LOAD_PATH, bionetpath)
-
-Pkg.activate(bionetpath)
-Pkg.instantiate()
-Pkg.precompile()
-
-Pkg.activate(rootdir)
-Pkg.develop(path=bionetpath)
+Pkg.activate(rootpath)
 Pkg.instantiate()
 Pkg.precompile()
 
 using PackageCompiler
+
+rootdir = @__DIR__
 
 precompilationsfile = joinpath(rootdir, "sysimage/precompilations.jl")
 if !isfile(precompilationsfile)
@@ -22,8 +16,8 @@ if !isfile(precompilationsfile)
 end
 
 create_sysimage(
-    ["HomefyAI", "BioNet"];
-    sysimage_path=joinpath(rootdir, "sysimage/HomefyAI.so"),
+    ["BioNet"];
+    sysimage_path=joinpath(rootdir, "sysimage/BioNet.so"),
     incremental=true, 
     precompile_execution_file=precompilationsfile,
     # filter_stdlibs=true,

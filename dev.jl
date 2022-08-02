@@ -1,3 +1,1 @@
-using Revise
-using HomefyAI
-using BioNet 
+using Revise; using BioNet;
