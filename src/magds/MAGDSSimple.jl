@@ -97,14 +97,14 @@ function deactivate!(graph::Graph, neurons::Bool = true, sensors::Bool = true)::
     if neurons
         for neurontype in graph.neurons
             for neuron in graph.neurons[neurontype.first]
-                deactivate!(neuron)
+                SimpleNeuron.deactivate!(neuron)
             end
         end
     end
 
     if sensors
         for sensortype in graph.sensors
-            deactivate!(graph.sensors[sensortype.first])
+            ASACGraph.deactivate!(graph.sensors[sensortype.first])
         end
     end
     nothing
