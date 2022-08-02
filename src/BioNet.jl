@@ -4,6 +4,7 @@ export AGDS, AGDSSimple, DatabaseParser, ASAGraph, ASACGraph, ASAGraphSimple, AS
 export Simulation, SubtreesBenchmarks, ECG, AssociativeSequentialMemory
 
 include("common/Common.jl")
+include("magds/SimpleNeuron.jl")
 include("asagraph/ASAGraph.jl")
 include("asagraphsimple/ASAGraphSimple.jl")
 include("asacgraph/ASACGraph.jl")

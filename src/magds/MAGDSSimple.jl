@@ -4,9 +4,10 @@ export addneuron!, connect!, activate!, deactivate!, findbyname, Neuron
 
 import Base.show
 
+using ..Common
 import ..Common: Opt, Connection
 import ..ASACGraph.deactivate!
-include("NeuronSimple.jl")
+using ..SimpleNeuron
 
 struct Graph <: Common.AbstractGraph
     sensors::Dict{Symbol, AbstractSensoryField}

@@ -1,7 +1,7 @@
 using Dates
 using ..Common
 using ..Common: AbstractSensor, AbstractNeuron
-import ..MAGDSSimple: activate!
+import BioNet.SimpleNeuron: activate!
 import Base.keytype
 
 export treename, name, datatype, activate!, activatesimple!, deactivate!
