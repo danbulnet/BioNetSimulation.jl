@@ -6,6 +6,7 @@ import Base.show
 
 using ..Common
 import ..Common: Opt, Connection
+import ..ASACGraph
 import ..ASACGraph.deactivate!
 using ..SimpleNeuron
 
