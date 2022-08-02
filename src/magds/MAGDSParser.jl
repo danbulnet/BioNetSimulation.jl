@@ -11,6 +11,7 @@ using DataFrames
 using ..MAGDSSimple
 using ..ASACGraph
 using ..Common
+using ..SimpleNeuron
 
 include("query.jl")
 
