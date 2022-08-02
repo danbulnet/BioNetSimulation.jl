@@ -2,7 +2,7 @@ module SimpleNeuron
 
 using ..Common
 
-export NeuronSimple
+export NeuronSimple, setname!, name, nameact, id, activate!, deactivate!, addconn!
 
 mutable struct NeuronSimple <: AbstractNeuron
     name::String
