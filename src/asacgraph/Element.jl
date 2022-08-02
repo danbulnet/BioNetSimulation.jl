@@ -134,7 +134,7 @@ function activate!(
     if (datatype(element) == numerical || datatype(element) == ordinal) && !neuronmode
         el = element
         while !isnothing(el.next) && el.activation > Common.INTERELEMENT_ACTIVATION_THRESHOLD
-            el.next.element.activation += el.next.weight ^ Common.INTERELEMENT_WEIGHT_POWER * el.activation
+            el.next.element.activation += el.next.weight * el.activation
             # if (treename(element) != "price")
             #     println("next", el.next, " ", el.activation)
             # end
@@ -149,7 +149,7 @@ function activate!(
 
         el = element
         while !isnothing(el.prev) && el.activation > Common.INTERELEMENT_ACTIVATION_THRESHOLD
-            el.prev.element.activation += el.prev.weight ^ Common.INTERELEMENT_WEIGHT_POWER * el.activation
+            el.prev.element.activation += el.prev.weight * el.activation
             # if (treename(element) != "price")
             #     println("prev", el.prev, " ", el.activation)
             # end
@@ -166,10 +166,11 @@ function activate!(
     outneurons = Set{AbstractNeuron}()
 
     if forward
+        divisor = 1 / (1 - Common.INTERELEMENT_ACTIVATION_THRESHOLD)
         for connection in outconns
             if !neuronmode
                 sign = connection.type == activation ? 1 : -1
-                signal = sign * connection.from.activation * connection.weight
+                signal = sign * connection.from.activation * connection.weight / divisor
             end
 
             activate!(connection.to, signal, false)

@@ -238,6 +238,14 @@ function printgraph(graph::Graph{Key}) where Key
     println("total number of elements: $elementscount")
 end
 
+function printelements(graph::Graph{Key}) where Key
+    el = minel = ASACGraph.search(graph, graph.minkey)
+    while !isnothing(el.next)
+        println(el.next)
+        el = el.next.element
+    end
+end
+
 function nodelevels(graph::Graph{Key})::SortedDict{Int, Vector{Node{Key}}} where Key
     node = graph.root
     levels = SortedDict{Int, Vector{Node{Key}}}()
