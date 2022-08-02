@@ -8,16 +8,16 @@ mutable struct NeuronSimple <: AbstractNeuron
 
     activation::Float64
 
-    in::Vector{ConnectionSimple}
-    out::Vector{ConnectionSimple}
+    in::Vector{Connection}
+    out::Vector{Connection}
 
     function NeuronSimple(name::String, parent::String)
         new(
             name,
             parent,
             0.0,
-            Vector{ConnectionSimple}(),
-            Vector{ConnectionSimple}()
+            Vector{Connection}(),
+            Vector{Connection}()
         )
     end
 end
@@ -56,7 +56,7 @@ function deactivate!(neuron::AbstractNeuron)
     neuron.activation = 0.0
 end
 
-function addconn!(neuron::AbstractNeuron, connection::ConnectionSimple, type::Symbol)
+function addconn!(neuron::AbstractNeuron, connection::Connection, type::Symbol)
     if type == :in
         push!(neuron.in, connection)
     elseif type == :out
