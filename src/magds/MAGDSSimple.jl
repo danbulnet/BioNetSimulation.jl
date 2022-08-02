@@ -1,6 +1,6 @@
 module MAGDSSimple
 
-export addneuron!, connect!, deactivate!, findbyname, Neuron
+export addneuron!, connect!, activate!, deactivate!, findbyname, Neuron
 
 import Base.show
 

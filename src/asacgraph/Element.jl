@@ -1,7 +1,7 @@
 using Dates
 using ..Common
 using ..Common: AbstractSensor, AbstractNeuron
-import ..MAGDSSimple
+import ..MAGDSSimple: activate!
 import Base.keytype
 
 export treename, name, datatype, activate!, activatesimple!, deactivate!
@@ -172,7 +172,7 @@ function activate!(
                 signal = sign * connection.from.activation * connection.weight
             end
 
-            MAGDSSimple.activate!(connection.to, signal, forward)
+            activate!(connection.to, signal, forward)
             push!(outneurons, connection.to)
         end
     end

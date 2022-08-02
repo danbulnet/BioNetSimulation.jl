@@ -5,7 +5,7 @@ import Base: keytype, insert!, range
 
 include("Node.jl")
 
-export range, search, insert!, printgraph, listelements, deactivate!, winner, weightedmean, test
+export range, search, insert!, printgraph, listelements, activate!, deactivate!, winner, weightedmean, test
 
 mutable struct Graph{Key} <: AbstractSensoryField
     name::String
