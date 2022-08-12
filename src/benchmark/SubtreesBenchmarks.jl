@@ -34,6 +34,28 @@ function dumbtest()
     memclean()
 end
 
+function oneoperation(
+    name::String,
+    creation::Function, 
+    operation::Function,
+    repeats::Int,
+    nlimit::UInt64,
+    range::Int64
+)
+    print(name, " ")
+    totaltime = 0
+    for i in 1:repeats
+        tree = creation(nlimit, range)
+        totaltime += @elapsed begin
+            for i = 1:nlimit
+                operation(tree, rand(1:range))
+            end
+        end
+    end
+    memclean()
+    totaltime / repeats
+end
+
 function oneinsert(
     name::String,
     creation::Function, 
@@ -131,6 +153,128 @@ function insertrand(;nlimit::UInt64 = UInt64(1_000_000), repeats::Int = 1)
             nlimit,
             range
         )
+
+        println()
+    end
+
+    GC.enable(true)
+    
+    timesdf = DataFrame([
+        "percents" => percents,
+        "asagraph" => times[1, :],
+        "asacgraph" => times[2, :],
+        "asagraphsimple" => times[3, :],
+        "asacgraphsimple" => times[4, :],
+        "rbtree" => times[5, :],
+        "avltree" => times[6, :],
+        "splaytree" => times[7, :],
+    ]...)
+
+    println("$(typeof(vec(times[1, :]))) $(vec(times[1, :]))")
+
+    timesdf
+end
+
+function searchrand(;nlimit::UInt64 = UInt64(1_000_000), repeats::Int = 3)
+    GC.enable(false)
+    
+    percents = collect(0.0:30.0:90.0)
+    # percents = Float64[]
+    push!(percents, [95, 99, 99.9, 99.99, 99.999]...)
+
+    times = zeros(7, length(percents))
+
+    for (index, p) in enumerate(percents)
+        range = r  = round(Int64, nlimit * (100 - p) / 100 )
+
+        print("$p% of duplicates: ")
+
+        times[1, index] = oneoperation(
+            "asagraph",
+            (nlimit, range) -> begin
+                graph = ASAGraph.Graph{Int}("test", numerical)
+                for i = 1:nlimit
+                    ASAGraph.insert!(graph, rand(1:range))
+                end
+                graph
+            end,
+            (graph, range) -> ASAGraph.search(graph, rand(1:range)),
+            repeats,
+            nlimit,
+            range
+        )
+
+        times[2, index] = oneoperation(
+            "asacgraph",
+            (nlimit, range) -> begin
+                graph = ASACGraph.Graph{Int}("test", numerical)
+                for i = 1:nlimit
+                    ASACGraph.insert!(graph, rand(1:range))
+                end
+                graph
+            end,
+            (graph, range) -> ASACGraph.search(graph, rand(1:range)),
+            repeats,
+            nlimit,
+            range
+        )
+
+        times[3, index] = oneoperation(
+            "asagraphsimple",
+            (nlimit, range) -> begin
+                graph = ASAGraphSimple.Graph{Int}("test", numerical)
+                for i = 1:nlimit
+                    ASAGraphSimple.insert!(graph, rand(1:range))
+                end
+                graph
+            end,
+            (graph, range) -> ASAGraphSimple.search(graph, rand(1:range)),
+            repeats,
+            nlimit,
+            range
+        )
+
+        times[4, index] = oneoperation(
+            "asacgraphsimple",
+            (nlimit, range) -> begin
+                graph = ASACGraphSimple.Graph{Int}("test", numerical)
+                for i = 1:nlimit
+                    ASACGraphSimple.insert!(graph, rand(1:range))
+                end
+                graph
+            end,
+            (graph, range) -> ASACGraphSimple.search(graph, rand(1:range)),
+            repeats,
+            nlimit,
+            range
+        )
+
+        # times[5, index] = oneoperation(
+        #     "rbtree",
+        #     () -> RBTree{Int}(), 
+        #     (tree, range) -> push!(tree, rand(1:range)),
+        #     repeats,
+        #     nlimit,
+        #     range
+        # )
+
+        # times[6, index] = oneoperation(
+        #     "avltree",
+        #     () -> AVLTree{Int}(), 
+        #     (tree, range) -> push!(tree, rand(1:range)),
+        #     repeats,
+        #     nlimit,
+        #     range
+        # )
+
+        # times[7, index] = oneoperation(
+        #     "splaytree",
+        #     () -> SplayTree{Int}(), 
+        #     (tree, range) -> push!(tree, rand(1:range)),
+        #     repeats,
+        #     nlimit,
+        #     range
+        # )
 
         println()
     end
