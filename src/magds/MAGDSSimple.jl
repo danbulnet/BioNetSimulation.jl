@@ -25,6 +25,13 @@ end
 
 sensorweights(sensor::Common.AbstractSensor) = 1 / (length(sensor.out) + 1)
 
+function countedsensorweights(sensor::Common.AbstractSensor)
+    weight = sensorweights(sensor)
+    for connout in sensor.out
+        connout.weight = weight
+    end
+end
+
 function addneuron!(graph::Graph, name::String, type::Symbol)::NeuronSimple
     if !haskey(graph.neurons, type)
         graph.neurons[type] = Set{NeuronSimple}()
@@ -54,6 +61,18 @@ function connect!( # LEGACY !
     push!(graph.connections[type], second2first)
     addconn!(second, second2first, :out)
     addconn!(first, second2first, :in)
+
+    if isa(first, Common.AbstractSensor)
+        outweight = sensorweights(first)
+        for connout in first.out
+            connout.weight = outweight
+        end
+    elseif isa(second, Common.AbstractSensor)
+        outweight = sensorweights(second)
+        for connout in second.out
+            connout.weight = outweight
+        end
+    end
 end
 
 function connect1d!(
@@ -72,6 +91,10 @@ function connect1d!(
         push!(graph.connections[type], first2second)
         addconn!(first, first2second, :out)
         addconn!(second, first2second, :in)
+    end
+
+    if isa(first, Common.AbstractSensor)
+        countedsensorweights(first)
     end
 end
 
