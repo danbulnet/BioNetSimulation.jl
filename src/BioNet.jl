@@ -15,7 +15,6 @@ include("magds/MAGDSParser.jl")
 include("magds/Algorithms.jl")
 include("benchmark/SubtreesBenchmarks.jl")
 include("benchmark/MAGDSBenchmark.jl")
-include("simulation/Simulation.jl")
 
 greet() = println("Hello BioNet!")
 

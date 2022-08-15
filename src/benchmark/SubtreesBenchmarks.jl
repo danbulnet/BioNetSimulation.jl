@@ -13,7 +13,7 @@ using ..ASACGraphSimple
 
 using DataStructures
 using DataFrames
-using GLMakie
+using Makie
 using LinearAlgebra
 
 function memclean()
@@ -402,7 +402,7 @@ function resultlines(
 
     f[1, 2] = Legend(f, ax, framevisible = false)
 
-    !isnothing(filename) && GLMakie.save(filename, f)
+    !isnothing(filename) && Makie.save(filename, f)
 
     f
 end
