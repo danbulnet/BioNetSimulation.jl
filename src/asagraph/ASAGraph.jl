@@ -3,7 +3,6 @@ module ASAGraph
 include("Node.jl")
 
 using Dates
-using DataStructures
 import Base: keytype, insert!, range
 
 export range, search, insert!, printgraph, listelements, deactivate!, winner, weightedmean, test

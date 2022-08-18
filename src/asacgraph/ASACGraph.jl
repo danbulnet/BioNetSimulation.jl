@@ -1,6 +1,5 @@
 module ASACGraph
 
-using DataStructures
 import Base: keytype, insert!, range
 
 include("Node.jl")

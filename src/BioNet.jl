@@ -13,8 +13,6 @@ include("magds/MAGDS.jl")
 include("magds/MAGDSSimple.jl")
 include("magds/MAGDSParser.jl")
 include("magds/Algorithms.jl")
-include("benchmark/SubtreesBenchmarks.jl")
-include("benchmark/MAGDSBenchmark.jl")
 
 greet() = println("Hello BioNet!")
 
