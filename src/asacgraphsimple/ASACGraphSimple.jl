@@ -2,6 +2,8 @@ module ASACGraphSimple
 
 include("Node.jl")
 
+using DataStructures
+
 export keytype, search, insert!, printgraph, listelements, deactivate!, winner, weightedmean, test
 
 mutable struct Graph{Key} <: AbstractSensoryField

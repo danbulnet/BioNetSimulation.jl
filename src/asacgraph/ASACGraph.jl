@@ -4,6 +4,8 @@ import Base: keytype, insert!, range
 
 include("Node.jl")
 
+using DataStructures
+
 export range, search, insert!, printgraph, listelements, activate!, deactivate!, winner, weightedmean, test
 
 mutable struct Graph{Key} <: AbstractSensoryField
