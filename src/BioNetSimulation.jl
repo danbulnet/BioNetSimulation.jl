@@ -3,6 +3,8 @@ module BioNetSimulation
 
 push!(LOAD_PATH, "bionet")
 
+import BioNet
+
 export BioNet
 export Simulation, SubtreesBenchmarks
 
