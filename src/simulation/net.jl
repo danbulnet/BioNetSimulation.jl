@@ -80,7 +80,7 @@ function graphsim(
     toggleheight=25, paddingcoeff=1.28, 
     connectorcolorstart=colorant"honeydew4", connectorcolorend=colorant"honeydew2",
     rowlimit::Int=0,
-    sensorfilter::Set{Symbol}=Set(),
+    sensorfilter::Set{Symbol}=Set{Symbol}(),
 )
     set_theme!(theme_black(), resolution=resolution)
     GLMakie.enable_SSAO[] = ssao
