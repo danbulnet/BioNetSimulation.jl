@@ -28,10 +28,35 @@ The list below contains Associative Data Structures followed by implemented algo
    - clustering [WIP]
    - knn [WIP]
 
-# Project setup
+# Project Setup
 
-Install Julia v. 1.7.2. Then in the project root directory type:
+From the project root directory run:
 
-`julia -O3 -tauto --project`
+`sh bin/setup`
 
-In the REPL type `]` followed by `instantiate` and `precompile`
+## Creating Sysimage
+
+From the project root directory run:
+
+`sh bin/sysimage`
+
+# Project Development
+
+To run interactive repl in development mode run from the project root directory:
+
+`sh bin/dev`
+
+To run interactive repl in development mode using custom sysimage run from the project root directory:
+
+`sh bin/devsys`
+
+
+# Testing
+
+To run tests type:
+
+`sh bin/test`
+
+To run tests using custom sysimage type:
+
+`sh bin/testsys`

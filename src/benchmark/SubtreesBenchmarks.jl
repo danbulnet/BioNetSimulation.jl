@@ -2,14 +2,11 @@ module SubtreesBenchmarks
 
 export insertrand, medianrand, resultlines
 
-using ..Common
-# using ..AvbTreeCounting
-# using ..AvbTree
-# using ..AvbTreeRaw
-using ..ASAGraph
-using ..ASAGraphSimple
-using ..ASACGraph
-using ..ASACGraphSimple
+using BioNet.Common
+using BioNet.ASAGraph
+using BioNet.ASAGraphSimple
+using BioNet.ASACGraph
+using BioNet.ASACGraphSimple
 
 using DataStructures
 using DataFrames

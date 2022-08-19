@@ -38,4 +38,4 @@ Manifest.toml
 statprof
 
 # sysimage
-sysimage/
+sysimage/*.so

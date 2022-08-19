@@ -1,27 +1,35 @@
 using Pkg
 
-rootpath = @__DIR__
+rootdir = @__DIR__
 
-Pkg.activate(rootpath)
+bionetpath = joinpath(rootdir, "bionet")
+push!(LOAD_PATH, bionetpath)
+
+Pkg.activate(bionetpath)
+Pkg.instantiate()
+Pkg.precompile()
+
+Pkg.activate(rootdir)
+Pkg.develop(path=bionetpath)
 Pkg.instantiate()
 Pkg.precompile()
 
 using PackageCompiler
 
-rootdir = @__DIR__
-
 precompilationsfile = joinpath(rootdir, "sysimage/precompilations.jl")
-if !isfile(precompilationsfile)
-    precompilationsfile = nothing
+if isfile(precompilationsfile)
+    create_sysimage(
+        ["BioNetSimulation", "BioNet"];
+        sysimage_path=joinpath(rootdir, "sysimage/BioNetSimulation.so"),
+        incremental=true, 
+        precompile_execution_file=precompilationsfile
+    )
+else
+    create_sysimage(
+        ["BioNetSimulation", "BioNet"];
+        sysimage_path=joinpath(rootdir, "sysimage/BioNetSimulation.so"),
+        incremental=true
+    )
 end
-
-create_sysimage(
-    ["BioNet"];
-    sysimage_path=joinpath(rootdir, "sysimage/BioNet.so"),
-    incremental=true, 
-    precompile_execution_file=precompilationsfile,
-    # filter_stdlibs=true,
-    # include_transitive_dependencies=true
-)
 
 exit()

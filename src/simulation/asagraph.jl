@@ -4,7 +4,7 @@ using DataStructures
 using Decimals: Decimal
 import Makie.Mesh
 
-using BioNet.Simulation
+using BioNetSimulation.Simulation
 import BioNet.ASACGraph: nodelevels as asanodelevels, elements as asaelements
 
 function renderasagraph!(

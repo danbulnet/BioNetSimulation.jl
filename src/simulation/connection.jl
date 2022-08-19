@@ -2,7 +2,7 @@ using GLMakie
 using Colors
 import Makie.Mesh
 
-using BioNet.Simulation
+using BioNetSimulation.Simulation
 import BioNet.ASAGraph
 import BioNet.ASACGraph
 import BioNet.ASACGraph: -

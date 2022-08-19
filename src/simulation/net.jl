@@ -10,7 +10,8 @@ using CSV
 # using WGLMakie
 # using JSServe
 
-import BioNet: ASACGraph, MAGDSParser, MAGDSSimple, Simulation
+import BioNetSimulation.Simulation
+import BioNet: ASACGraph, MAGDSParser, MAGDSSimple
 import BioNet.ASAGraph
 import BioNet.ASACGraph: AbstractSensor, id
 

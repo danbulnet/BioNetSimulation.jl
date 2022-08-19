@@ -4,7 +4,7 @@ using DataStructures
 
 import Makie.Mesh
 
-using BioNet.Simulation
+using BioNetSimulation.Simulation
 
 function renderneuron(
     scene, position, neuroncolor, activation;
