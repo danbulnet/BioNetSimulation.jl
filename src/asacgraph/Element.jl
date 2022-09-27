@@ -181,6 +181,111 @@ function activate!(
     outneurons
 end
 
+function activateproba!(
+    element::Element, 
+    signal::Float64 = 1.0, 
+    forward::Bool = true, 
+    neuronmode::Bool = false
+)::Tuple{Set{AbstractNeuron}, Float32}
+    activations = signal / max(length(element.out), 1)
+    element.activation += signal
+    if element.activation >= Common.NEURON_ACTIVATION_THRESHOLD
+        element.state = active
+    else
+        element.state = inactive
+    end
+
+    outconns = Set{Connection}()
+    outconns = union(outconns, element.out)
+    
+    outneurons = Set{AbstractNeuron}()
+    
+    divisor = 1 / (1 - Common.INTERELEMENT_ACTIVATION_THRESHOLD)
+    if forward
+        for connection in element.out
+            if !neuronmode
+                sign = connection.type == activation ? 1 : -1
+                signal = sign * connection.from.activation * connection.weight / divisor
+            else
+                signal = activations
+            end
+
+            activate!(connection.to, signal, false)
+            push!(outneurons, connection.to)
+        end
+    end
+
+    if (datatype(element) == numerical || datatype(element) == ordinal) && !neuronmode
+        el = element
+        while !isnothing(el.next) && el.activation > Common.INTERELEMENT_ACTIVATION_THRESHOLD
+            currentweight = el.next.weight * el.activation
+            el.next.element.activation += currentweight
+            currentactivation = currentweight / max(length(el.next.element.out), 1)
+            activations += currentactivation
+            # if (treename(element) != "price")
+            #     println("next", el.next, " ", el.activation)
+            # end
+            el = el.next.element
+            if el.activation >= Common.NEURON_ACTIVATION_THRESHOLD
+                el.state = active
+            else
+                el.state = inactive
+            end
+            outconns = union(outconns, el.out)
+
+            if forward
+                divisor = 1 / (1 - Common.INTERELEMENT_ACTIVATION_THRESHOLD)
+                for connection in el.out
+                    if !neuronmode
+                        sign = connection.type == activation ? 1 : -1
+                        signal = sign * connection.from.activation * connection.weight / divisor
+                    else
+                        signal = currentactivation
+                    end
+        
+                    activate!(connection.to, signal, false)
+                    push!(outneurons, connection.to)
+                end
+            end
+        end
+
+        el = element
+        while !isnothing(el.prev) && el.activation > Common.INTERELEMENT_ACTIVATION_THRESHOLD
+            currentweight = el.prev.weight * el.activation
+            el.prev.element.activation += currentweight
+            currentactivation = currentweight / max(length(el.prev.element.out), 1)
+            activations += currentactivation
+            # if (treename(element) != "price")
+            #     println("prev", el.prev, " ", el.activation)
+            # end
+            el = el.prev.element
+            if el.activation >= Common.NEURON_ACTIVATION_THRESHOLD
+                el.state = active
+            else
+                el.state = inactive
+            end
+            outconns = union(outconns, el.out)
+
+            if forward
+                divisor = 1 / (1 - Common.INTERELEMENT_ACTIVATION_THRESHOLD)
+                for connection in el.out
+                    if !neuronmode
+                        sign = connection.type == activation ? 1 : -1
+                        signal = sign * connection.from.activation * connection.weight / divisor
+                    else
+                        signal = currentactivation
+                    end
+        
+                    activate!(connection.to, signal, false)
+                    push!(outneurons, connection.to)
+                end
+            end
+        end
+    end
+
+    (outneurons, activations)
+end
+
 function deactivate!(el::Element{Key}) where Key
     el.state = Common.inactive
     el.activation = 0.0
