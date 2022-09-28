@@ -185,7 +185,8 @@ function activateproba!(
     element::Element, 
     signal::Float64 = 1.0, 
     forward::Bool = true, 
-    neuronmode::Bool = false
+    neuronmode::Bool = false,
+    fuzzy::Bool = true
 )::Tuple{Set{AbstractNeuron}, Float32}
     activations = signal / max(length(element.out), 1)
     element.activation += signal
@@ -215,13 +216,13 @@ function activateproba!(
         end
     end
 
-    if (datatype(element) == numerical || datatype(element) == ordinal) && !neuronmode
+    if (datatype(element) == numerical || datatype(element) == ordinal) && fuzzy
         el = element
         while !isnothing(el.next) && el.activation > Common.INTERELEMENT_ACTIVATION_THRESHOLD
             currentweight = el.next.weight * el.activation
             el.next.element.activation += currentweight
             currentactivation = currentweight / max(length(el.next.element.out), 1)
-            activations += currentactivation
+            activations = max(currentactivation, activations)
             # if (treename(element) != "price")
             #     println("next", el.next, " ", el.activation)
             # end
@@ -254,7 +255,7 @@ function activateproba!(
             currentweight = el.prev.weight * el.activation
             el.prev.element.activation += currentweight
             currentactivation = currentweight / max(length(el.prev.element.out), 1)
-            activations += currentactivation
+            activations = max(currentactivation, activations)
             # if (treename(element) != "price")
             #     println("prev", el.prev, " ", el.activation)
             # end
