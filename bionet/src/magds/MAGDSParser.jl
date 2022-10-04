@@ -287,7 +287,7 @@ function infertype(coltype::DataType)
     if coltype <: AbstractArray
         coltype = eltype(coltype)
     end
-    if coltype <: Integer
+    if coltype <: Integer && coltype != Bool
         coltype = Int
     end
 

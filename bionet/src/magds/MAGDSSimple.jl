@@ -23,7 +23,7 @@ struct Graph <: Common.AbstractGraph
     end
 end
 
-sensorweights(sensor::Common.AbstractSensor) = 1 / (length(sensor.out) + 1)
+sensorweights(sensor::Common.AbstractSensor) = 1 / (length(sensor.out))
 
 function countedsensorweights(sensor::Common.AbstractSensor)
     weight = sensorweights(sensor)
