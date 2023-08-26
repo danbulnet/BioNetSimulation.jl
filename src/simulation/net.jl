@@ -17,18 +17,19 @@ import BioNet.ASACGraph: AbstractSensor, id
 
 function graphsim(
     magds::MAGDSSimple.Graph;
+    backgroundcolor=:black,
     resolution=(3700, 2000),
     camera3d=true, ssao=false,
     neuronsize=Point3(1.0, 0.7, 0.1), neurongap=2.0,
     neuroncolorstart=HSV(70, 0.38, 1), neuroncolorstop=HSV(-180, 0.38, 1),
-    toggleheight=25, paddingcoeff=1.28, 
+    toggleheight=25, paddingcoeff=1.28,
     connectorcolorstart=colorant"honeydew4", connectorcolorend=colorant"honeydew2",
-    sensorfilter::Set{Symbol}=Set{Symbol}(),
+    sensorfilter::Set{Symbol}=Set{Symbol}()
 )
     set_theme!(theme_black(), resolution=resolution)
     GLMakie.enable_SSAO[] = ssao
 
-    figure, parentscene, scenes, camera = createscenes(resolution, camera3d)
+    figure, parentscene, scenes, camera = createscenes(resolution, camera3d, backgroundcolor)
 
     sensorsnames = sort(map(first, collect(magds.sensors)))
     sensors, totalwidth = rendersensors(magds, sensorfilter, parentscene, scenes)
@@ -67,27 +68,28 @@ function graphsim(
     println(activetoggles(toggles))
 
     center!(parentscene.scene)
-    
+
     figure
 end
 
 function graphsim(
     dffiles::Vector{String};
+    backgroundcolor=:black,
     resolution=(3700, 2000),
     camera3d=true, ssao=false,
     neuronsize=Point3(1.0, 0.7, 0.1), neurongap=2.0,
     neuroncolorstart=HSV(70, 0.38, 1), neuroncolorstop=HSV(-180, 0.38, 1),
-    toggleheight=25, paddingcoeff=1.28, 
+    toggleheight=25, paddingcoeff=1.28,
     connectorcolorstart=colorant"honeydew4", connectorcolorend=colorant"honeydew2",
     rowlimit::Int=0,
-    sensorfilter::Set{Symbol}=Set{Symbol}(),
+    sensorfilter::Set{Symbol}=Set{Symbol}()
 )
+    GLMakie.activate!(; ssao=ssao, pause_renderloop=false)
     set_theme!(theme_black(), resolution=resolution)
-    GLMakie.enable_SSAO[] = ssao
 
-    figure, parentscene, scenes, camera = createscenes(resolution, camera3d)
-    
-    dfs = Dict{Symbol, DataFrame}()
+    figure, parentscene, scenes, camera = createscenes(resolution, camera3d, backgroundcolor)
+
+    dfs = Dict{Symbol,DataFrame}()
     for filename in dffiles
         systemseparator = Base.Filesystem.path_separator
         separator = if occursin(systemseparator, filename)
@@ -138,17 +140,18 @@ function graphsim(
     println(activetoggles(toggles))
 
     center!(parentscene.scene)
-    
+
     figure
 end
 
 function graphsim(
     database::String, host::String, username::String, password::String, port::Int;
+    backgroundcolor=:black,
     resolution=(3700, 2000),
     camera3d=true, ssao=false,
     neuronsize=Point3(1.0, 0.7, 0.1), neurongap=2.0,
     neuroncolorstart=HSV(70, 0.38, 1), neuroncolorstop=HSV(-180, 0.38, 1),
-    toggleheight=25, paddingcoeff=1.28, 
+    toggleheight=25, paddingcoeff=1.28,
     connectorcolorstart=colorant"honeydew4", connectorcolorend=colorant"honeydew2",
     tablefilter=String[], rowlimit::Int=0,
     sensorfilter::Set{Symbol}=Set{Symbol}(),
@@ -157,8 +160,8 @@ function graphsim(
     set_theme!(theme_black(), resolution=resolution)
     GLMakie.enable_SSAO[] = ssao
 
-    figure, parentscene, scenes, camera = createscenes(resolution, camera3d)
-    
+    figure, parentscene, scenes, camera = createscenes(resolution, camera3d, backgroundcolor)
+
     magdsparser = if dbtype == :mariadb
         MAGDSParser.mdb2magds
     elseif dbtype == :postgres
@@ -167,7 +170,7 @@ function graphsim(
 
     magds = magdsparser(
         database, username, password;
-        host=host,port=port, tablefilter=tablefilter, rowlimit=rowlimit
+        host=host, port=port, tablefilter=tablefilter, rowlimit=rowlimit
     )
     sensorsnames = sort(map(first, collect(magds.sensors)))
     sensors, totalwidth = rendersensors(magds, sensorfilter, parentscene, scenes)
@@ -206,12 +209,12 @@ function graphsim(
     println(activetoggles(toggles))
 
     center!(parentscene.scene)
-    
+
     figure
 end
 
 function rendersensors(magds, sensorfilter, parentscene, scenes)
-    sensors = OrderedDict{Symbol, Dict}()
+    sensors = OrderedDict{Symbol,Dict}()
     totalwidth = 0.0
     for (name, graph) in magds.sensors
         if isnothing(graph.minkey)
@@ -253,22 +256,22 @@ function sensortoggles(fig, resolution, sensornames, sensorfilter, toggleheight)
             fig, active=active, height=toggleheight, width=2toggleheight
         ))
         push!(featurelabels, Label(
-            fig, string(name), height=toggleheight, textsize=(0.8toggleheight - 2)
+            fig, string(name), height=toggleheight, fontsize=(0.8toggleheight - 2)
         ))
     end
     rerenderbutton = Button(
         fig, strokewidth=3,
-        label="rerender", textsize=0.8toggleheight, 
+        label="rerender", fontsize=0.8toggleheight,
         labelcolor=:grey12, labelcolor_hover=:grey12, labelcolor_active=:grey20,
-        buttoncolor=:springgreen3, buttoncolor_hover=:springgreen2, 
+        buttoncolor=:springgreen3, buttoncolor_hover=:springgreen2,
         buttoncolor_active=:springgreen1,
         cornerradius=8, font="Consolas"
     )
     push!(featuretoggles, rerenderbutton)
 
     restorebutton = Button(
-        fig, strokewidth=3, 
-        label="restore", textsize=0.8toggleheight, 
+        fig, strokewidth=3,
+        label="restore", fontsize=0.8toggleheight,
         labelcolor=:grey12, labelcolor_hover=:grey12, labelcolor_active=:grey20,
         buttoncolor=:ivory3, buttoncolor_hover=:ivory2, buttoncolor_active=:ivory1,
         cornerradius=8, font="Consolas"
@@ -282,14 +285,14 @@ function sensortoggles(fig, resolution, sensornames, sensorfilter, toggleheight)
     for colindex in 1:(rows4toggle)
         startindex = 1 + toggles4row * (colindex - 1)
         endindex = min(startindex + toggles4row - 1, togglelen)
-        fig[1, colindex + 1] = grid!(hcat(
-            featuretoggles[startindex:endindex], featurelabels[startindex:endindex]
-        ), tellheight = false)
+        fig[1, colindex+1] = grid!(hcat(
+                featuretoggles[startindex:endindex], featurelabels[startindex:endindex]
+            ), tellheight=false)
     end
 
     return Dict(
-        :toggles => featuretoggles[1:end - 1],
-        :labels => featurelabels[1: end - 1],
+        :toggles => featuretoggles[1:end-1],
+        :labels => featurelabels[1:end-1],
         :rerenderbutton => rerenderbutton,
         :restorebutton => restorebutton,
     )
@@ -325,23 +328,23 @@ function renderneurons(
         push!(rclusters, rcluster)
         push!(neuronpositions, positions)
     end
-    
+
     r = paddingcoeff * maximum(rclusters)
     clusterorigins = clusterpositions(r, rclusters)
     clustercolors = Colors.range(
         neuroncolorstart, stop=neuroncolorstop, length=length(rclusters) + 1
     )
-    neurons = Dict{Symbol, Dict{Symbol, Dict}}()
+    neurons = Dict{Symbol,Dict{Symbol,Dict}}()
     for (i, (cname, currentneurons)) in magds.neurons |> enumerate
         scenes[cname] = Scene(parentscene.scene, camera=parentscene.scene.camera)
-        neurons[cname] = Dict{Symbol, Dict}()
+        neurons[cname] = Dict{Symbol,Dict}()
         sign = i % 2 == 0 ? 1 : -1
         clusterorigins[i] = Point(clusterorigins[i][1], clusterorigins[i][2], 1)
         for (j, neuron) in enumerate(currentneurons)
             neurons[cname][Symbol(neuron.name)] = renderneuron(
-                scenes[cname], 
-                clusterorigins[i] + neuronpositions[i][j], 
-                clustercolors[i], 
+                scenes[cname],
+                clusterorigins[i] + neuronpositions[i][j],
+                clustercolors[i],
                 neuron.activation;
                 text=neuron.name
             )
@@ -351,7 +354,7 @@ function renderneurons(
     r, neurons
 end
 
-function createscenes(resolution, camera3d)
+function createscenes(resolution, camera3d, backgroundcolor)
     figure = Figure()
     rowsize!(figure.layout, 1, Fixed(resolution[2]))
 
@@ -361,22 +364,22 @@ function createscenes(resolution, camera3d)
     parentscene = LScene(
         figure[:, 1],
         show_axis=false,
-        scenekw = (
+        scenekw=(
             clear=true,
-            lights=[al],
-            backgroundcolor=:black,
+            # lights=[al],
+            backgroundcolor=backgroundcolor,
             # ssao = Makie.SSAO(radius=250.0, blur=2, bias=1),
             # lightposition = Vec3f(0, 0, 15),
-            shininess=256f0
+            shininess=256.0f0
         )
     )
-    scenes = Dict{Symbol, Scene}()
+    scenes = Dict{Symbol,Scene}()
 
-    camera = if camera3d 
+    camera = if camera3d
         camera = cam3d!(parentscene.scene)
         camera.attributes.reset[] = Keyboard.m
         camera
-    else 
+    else
         cam2d!(parentscene.scene)
     end
     # camc = cameracontrols(parentscene.scene)
@@ -386,11 +389,11 @@ function createscenes(resolution, camera3d)
 end
 
 function connecgraph(
-    magds, scenes, neurons, sensors, sensorfilter, 
+    magds, scenes, neurons, sensors, sensorfilter,
     connectorcolorstart, connectorcolorend;
     linewidth=0.38
 )
-    conncections = Dict{Symbol, Dict}()
+    conncections = Dict{Symbol,Dict}()
     for (cname, currentneurons) in magds.neurons
         for neuron in currentneurons
             _sourcecluster, sourceid = MAGDSSimple.id(neuron)

@@ -13,15 +13,15 @@ function connectelements!(
 )
     range = Float64(elements[end].key - elements[1].key)
     @assert(length(elements) == length(renderedelements))
-    connections = Dict{Symbol, Dict{Symbol, Any}}()
+    connections = Dict{Symbol,Dict{Symbol,Any}}()
     for i in length(elements):-1:2
 
         weight = if eltype(elements) <: ASAGraph.Element
-            ASAGraph.weight(elements[i - 1], elements[i], range)
+            ASAGraph.weight(elements[i-1], elements[i], range)
         elseif eltype(elements) <: ASACGraph.Element
-            elements[i - 1].next.weight
+            elements[i-1].next.weight
         end
-        keyleft = Symbol(elements[i - 1].key)
+        keyleft = Symbol(elements[i-1].key)
         keyright = Symbol(elements[i].key)
         firstconnector = renderedelements[keyleft][:connectors][:right][1]
         secondconnector = renderedelements[keyright][:connectors][:left][1]
@@ -37,12 +37,12 @@ function connectelements!(
 end
 
 function connect2elements!(
-    scene, 
+    scene,
     connector1::Mesh, connector2::Mesh, weight::Float64;
     colorstart=colorant"gray10", colorend=colorant"gray20",
     transparent=true,
     linewidth=1.25,
-    textcolor=:grey15, textsize=0.042,
+    textcolor=:grey15, textsize=0.042
 )
     ncolors = 100
     colors = Colors.range(colorstart, stop=colorend, length=ncolors)
@@ -50,13 +50,13 @@ function connect2elements!(
 
     connector1.color = color
     connector2.color = color
-    
+
     mesh1geometry = meshgeometry(connector1)
     mesh2geometry = meshgeometry(connector2)
     coords = hcat(mesh1geometry[:center], mesh2geometry[:center])'
 
     line = lines!(
-        scene, 
+        scene,
         collect(coords[:, 1]), collect(coords[:, 2]), collect(coords[:, 3]);
         linewidth=linewidth, color=color,
         transparent=transparent, fxaa=true
@@ -78,7 +78,7 @@ function connect2elements!(
             fxaa=true,
             font="Consolas",
             align=(:center, :center),
-            textsize=textsize,
+            fontsize=textsize,
             markerspace=:data
         ))
     end
@@ -91,7 +91,7 @@ function connectneuronelement!(
     colorstart=colorant"gray10", colorend=colorant"gray20",
     transparent=true,
     linewidth=0.38,
-    textcolor=:grey15, textsize=0.042,
+    textcolor=:grey15, textsize=0.042
 )
     ncolors = 100
     colors = Colors.range(colorstart, stop=colorend, length=ncolors)
@@ -99,11 +99,11 @@ function connectneuronelement!(
 
     neuronconnector.color = color
     elementconnector.color = color
-    
+
     neurongeometry = meshgeometry(neuronconnector)
     elementgeometry = meshgeometry(elementconnector)
     rawelementgeometry = meshgeometry(elementconnector; transformations=false)
-    
+
     coords = hcat(neurongeometry[:center], elementgeometry[:center])'
 
     line = lines!(
@@ -129,7 +129,7 @@ function connectneuronelement!(
             fxaa=true,
             font="Consolas",
             align=(:center, :center),
-            textsize=textsize,
+            fontsize=textsize,
             markerspace=:data
         ))
     end
@@ -145,13 +145,13 @@ function connectnodes!(
         childcounter = 1
         for (inode, node) in enumerate(nodes)
             nochildren = node.size + 1
-            noelements = node.size 
+            noelements = node.size
             renderednode = renderednodes[Symbol("n$(level)p$inode")][:node]
             nodegeomentry = meshgeometry(renderednode)
             nodewidth = nodegeomentry[:widths][1]
-            
+
             if ilevel > 1
-                for nochild in 0:(nochildren - 1)
+                for nochild in 0:(nochildren-1)
                     start = Point(
                         nodegeomentry[:origin][1] + (nodewidth / noelements) * nochild,
                         nodegeomentry[:origin][2],
@@ -166,14 +166,14 @@ function connectnodes!(
                     )
 
                     push!(lines, connect2nodes!(
-                        scene, start, stop; 
+                        scene, start, stop;
                         transparent=transparent, color=color, linewidth=linewidth
                     ))
 
                     childcounter += 1
                 end
             end
-            
+
             if level == 1
                 labelgeometry = labelmesh |> meshgeometry
                 start = Point(
@@ -187,7 +187,7 @@ function connectnodes!(
                     nodegeomentry[:center][3]
                 )
                 push!(lines, connect2nodes!(
-                    scene, start, stop; 
+                    scene, start, stop;
                     transparent=transparent, color=color, linewidth=linewidth
                 ))
             end
@@ -202,7 +202,7 @@ function connect2nodes!(
 )
     coords = hcat(first, second)'
     line = lines!(
-        scene, 
+        scene,
         collect(coords[:, 1]), collect(coords[:, 2]), collect(coords[:, 3]);
         linewidth=linewidth, color=color,
         transparent=transparent, fxaa=true

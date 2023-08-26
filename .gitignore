@@ -39,3 +39,6 @@ statprof
 
 # sysimage
 sysimage/*.so
+
+# VSCode
+.vscode

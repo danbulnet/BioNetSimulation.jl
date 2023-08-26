@@ -9,7 +9,7 @@ Base.@kwdef mutable struct Lorenz
     dt::Float64 = 0.01
     σ::Float64 = 10
     ρ::Float64 = 28
-    β::Float64 = 8/3
+    β::Float64 = 8 / 3
     x::Float64 = 1
     y::Float64 = 1
     z::Float64 = 1
@@ -33,10 +33,10 @@ function draw()
 
     set_theme!(theme_black())
 
-    fig, ax, l = lines(points, color = colors,
-        colormap = :inferno, transparency = true,
-        axis = (; type = Axis3, protrusions = (0, 0, 0, 0),
-            viewmode = :fit, limits = (-30, 30, -30, 30, 0, 50)))
+    fig, ax, l = lines(points, color=colors,
+        colormap=:inferno, transparency=true,
+        axis=(; type=Axis3, protrusions=(0, 0, 0, 0),
+            viewmode=:fit, limits=(-30, 30, -30, 30, 0, 50)))
 
     record(fig, "lorenz.mp4", 1:120) do frame
         for i in 1:50
@@ -48,24 +48,24 @@ function draw()
         l.colorrange = (0, frame)
     end
 end
-    
+
 function map3dv1()
     x = 1:10
     y = 1:10
     z = 1:10
-    f(x,y,z) = x^2 + y^2 + z^2
-    vol = [f(ix,iy,iz) for ix in x, iy in y, iz in z]
+    f(x, y, z) = x^2 + y^2 + z^2
+    vol = [f(ix, iy, iz) for ix in x, iy in y, iz in z]
     fig, ax, _ = volume(
-        x, y, z, 
-        vol, 
-        colormap = :plasma, colorrange = (minimum(vol), maximum(vol)),
-        figure = (; resolution = (3000, 2000)),  
+        x, y, z,
+        vol,
+        colormap=:plasma, colorrange=(minimum(vol), maximum(vol)),
+        figure=(; resolution=(3000, 2000)),
         axis=(;
-            type=Axis3, 
-            perspectiveness = 0.5, 
-            azimuth = 7.19, 
-            elevation = 0.57,  
-            aspect = (1,1,1)
+            type=Axis3,
+            perspectiveness=0.5,
+            azimuth=7.19,
+            elevation=0.57,
+            aspect=(1, 1, 1)
         )
     )
     fig
@@ -74,31 +74,31 @@ end
 function map3dv2()
     xs = -10:0.1:10
     ys = -10:0.1:10
-    zs = [2 * (cos(x) * cos(y)) * (.1 + exp(-(x^2 + y^2 + 1) / 25)) - 0.01x^2 - 0.008y^2 - 0.1x - 0.08y for x in xs, y in ys]
-    zsn = [0.3 * (sin(x*y) + 2cos(y) + sin(x) - 0.01x^2 - 0.008y^2 - 0.3x - 0.2y) for x in xs, y in ys]
+    zs = [2 * (cos(x) * cos(y)) * (0.1 + exp(-(x^2 + y^2 + 1) / 25)) - 0.01x^2 - 0.008y^2 - 0.1x - 0.08y for x in xs, y in ys]
+    zsn = [0.3 * (sin(x * y) + 2cos(y) + sin(x) - 0.01x^2 - 0.008y^2 - 0.3x - 0.2y) for x in xs, y in ys]
 
     fig, ax, pl = surface(
-        xs, ys, zsn, 
-        colormap = [:black, :white],
+        xs, ys, zsn,
+        colormap=[:black, :white],
         # Light comes from (0, 0, 15), i.e the sphere
-        axis = (
-            scenekw = (
+        axis=(
+            scenekw=(
                 # Light comes from (0, 0, 15), i.e the sphere
-                lightposition = Vec3f(0, 0, 15),
+                lightposition=Vec3f(0, 0, 15),
                 # base light of the plot only illuminates red colors
-                ambient = RGBf(0.58, 0.58, 0.18)
+                ambient=RGBf(0.58, 0.58, 0.18)
             ),
         ),
         # light from source (sphere) illuminates yellow colors
-        diffuse = Vec3f(0.4, 0.4, 0),
+        diffuse=Vec3f(0.4, 0.4, 0),
         # reflections illuminate blue colors
-        specular = Vec3f(0, 0, 1.0),
+        specular=Vec3f(0, 0, 1.0),
         # Reflections are sharp
-        shininess = 128f0,
-        figure = (resolution=(3000, 2000),)
+        shininess=128.0f0,
+        figure=(resolution=(3000, 2000),)
     )
-    surface!(xs, ys, zs .+ 10, colormap = [:green, :yellow],)
-    mesh!(ax, Sphere(Point3f(0, 0, 15), 1f0), color=RGBf(1, 0.7, 0.3))
+    surface!(xs, ys, zs .+ 10, colormap=[:green, :yellow],)
+    mesh!(ax, Sphere(Point3f(0, 0, 15), 1.0f0), color=RGBf(1, 0.7, 0.3))
 
     fig
     # app = JSServe.App() do session
@@ -120,18 +120,18 @@ function map3dv2()
 end
 
 function map3dv3()
-    fig = Figure(resolution = (3000, 2000))
+    fig = Figure(resolution=(3000, 2000))
     ax1 = LScene(fig[1, 1], show_axis=false)
-    p1 = mesh!(ax1, Rect2f(-2, -2, 4, 4), color = :red, shading = false, transparency = true)
-    p2 = mesh!(ax1, Rect2f(-2, -2, 4, 4), color = :blue, shading = false, transparency = true)
-    p3 = mesh!(ax1, Rect2f(-2, -2, 4, 4), color = :red, shading = false, transparency = true)
+    p1 = mesh!(ax1, Rect2f(-2, -2, 4, 4), color=:red, shading=false, transparency=true)
+    p2 = mesh!(ax1, Rect2f(-2, -2, 4, 4), color=:blue, shading=false, transparency=true)
+    p3 = mesh!(ax1, Rect2f(-2, -2, 4, 4), color=:red, shading=false, transparency=true)
     for (dz, p) in zip((-1, 0, 1), (p1, p2, p3))
         translate!(p, 0, 0, dz)
     end
 
     ax2 = LScene(fig[1, 2], show_axis=false)
-    p1 = mesh!(ax2, Rect2f(-1.5, -1, 3, 3), color = (:red, 0.5), shading = false, transparency=true)
-    p2 = mesh!(ax2, Rect2f(-1.5, -2, 3, 3), color = (:blue, 0.5), shading = false, transparency=true)
+    p1 = mesh!(ax2, Rect2f(-1.5, -1, 3, 3), color=(:red, 0.5), shading=false, transparency=true)
+    p2 = mesh!(ax2, Rect2f(-1.5, -2, 3, 3), color=(:blue, 0.5), shading=false, transparency=true)
     rotate!(p1, Vec3f(0, 1, 0), 0.1)
     rotate!(p2, Vec3f(0, 1, 0), -0.1)
     fig
@@ -141,19 +141,19 @@ function map_v4()
     f = Figure()
 
     r = LinRange(-1, 1, 100)
-    cube = [(x.^2 + y.^2 + z.^2) for x = r, y = r, z = r]
+    cube = [(x .^ 2 + y .^ 2 + z .^ 2) for x = r, y = r, z = r]
     cube_with_holes = cube .* (cube .> 1.4)
 
     viewmodes = [:fitzoom, :fit, :stretch]
 
     for (j, viewmode) in enumerate(viewmodes)
         for (i, azimuth) in enumerate([1.1, 1.275, 1.45] .* pi)
-            ax = Axis3(f[i, j], aspect = :data,
-                azimuth = azimuth,
-                viewmode = viewmode, title = "$viewmode")
+            ax = Axis3(f[i, j], aspect=:data,
+                azimuth=azimuth,
+                viewmode=viewmode, title="$viewmode")
             hidedecorations!(ax)
             ax.protrusions = (0, 0, 0, 20)
-            volume!(cube_with_holes, algorithm = :iso, isorange = 0.05, isovalue = 1.7)
+            volume!(cube_with_holes, algorithm=:iso, isorange=0.05, isovalue=1.7)
         end
     end
 
@@ -164,18 +164,18 @@ end
 function menuexample()
     fig = Figure()
 
-    menu = Menu(fig, options = ["viridis", "heat", "blues"])
+    menu = Menu(fig, options=["viridis", "heat", "blues"])
 
-    funcs = [sqrt, x->x^2, sin, cos]
+    funcs = [sqrt, x -> x^2, sin, cos]
 
-    menu2 = Menu(fig, options = zip(["Square Root", "Square", "Sine", "Cosine"], funcs))
+    menu2 = Menu(fig, options=zip(["Square Root", "Square", "Sine", "Cosine"], funcs))
 
     fig[1, 1] = vgrid!(
-        Label(fig, "Colormap", width = nothing),
+        Label(fig, "Colormap", width=nothing),
         menu,
-        Label(fig, "Function", width = nothing),
+        Label(fig, "Function", width=nothing),
         menu2;
-        tellheight = false, width = 200)
+        tellheight=false, width=200)
 
     ax = Axis(fig[1, 2])
 
@@ -184,7 +184,7 @@ function menuexample()
     ys = lift(func) do f
         f.(0:0.3:10)
     end
-    scat = scatter!(ax, ys, markersize = 10px, color = ys)
+    scat = scatter!(ax, ys, markersize=10px, color=ys)
 
     cb = Colorbar(fig[1, 3], scat)
 
@@ -249,8 +249,8 @@ function modelviewer()
     aspects = [:data, (1, 1, 1), (1, 2, 3), (3, 2, 1)]
 
     for (i, aspect) in enumerate(aspects)
-        ax = Axis3(f[fldmod1(i, 2)...], aspect = aspect, title = "$aspect")
-        mesh!(brain, color = :bisque)
+        ax = Axis3(f[fldmod1(i, 2)...], aspect=aspect, title="$aspect")
+        mesh!(brain, color=:bisque)
     end
 
     f
@@ -267,8 +267,8 @@ function antmodel()
     aspects = [:data, (1, 1, 1), (1, 2, 3), (3, 2, 1)]
 
     for (i, aspect) in enumerate(aspects)
-        ax = Axis3(f[fldmod1(i, 2)...], aspect = aspect, title = "$aspect")
-        mesh!(brain, color = :bisque)
+        ax = Axis3(f[fldmod1(i, 2)...], aspect=aspect, title="$aspect")
+        mesh!(brain, color=:bisque)
     end
 
     f
@@ -277,14 +277,14 @@ end
 function graph()
     g = smallgraph(:cubical)
     elabels_shift = [0.5 for i in 1:ne(g)]
-    elabels_shift[[2,7,8,9]] .= 0.3
+    elabels_shift[[2, 7, 8, 9]] .= 0.3
     elabels_shift[10] = 0.25
     graphplot(
-        g; 
+        g;
         layout=Spring(dim=3, seed=5),
-        elabels="Edge ".*repr.(1:ne(g)),
+        elabels="Edge " .* repr.(1:ne(g)),
         elabels_textsize=12,
-        elabels_opposite=[3,5,7,8,12],
+        elabels_opposite=[3, 5, 7, 8, 12],
         elabels_shift,
         elabels_distance=3,
         arrow_show=true,
@@ -306,12 +306,12 @@ function rotatedtext()
 
     text!(
         fill("Makie", 7),
-        rotation = [i / 7 * 1.5pi for i in 1:7],
-        position = [Point3f(0, 0, i/2) for i in 1:7],
-        color = [cgrad(:viridis)[x] for x in LinRange(0, 1, 7)],
-        align = (:left, :baseline),
-        textsize = 100,
-        space = :data
+        rotation=[i / 7 * 1.5pi for i in 1:7],
+        position=[Point3f(0, 0, i / 2) for i in 1:7],
+        color=[cgrad(:viridis)[x] for x in LinRange(0, 1, 7)],
+        align=(:left, :baseline),
+        fontsize=100,
+        space=:data
     )
 
     f

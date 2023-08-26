@@ -35,9 +35,9 @@ function renderneuron(
         nothing
     end
     Dict(
-        :neuron => neuron, 
-        :wire => wire, 
-        :text => text, 
+        :neuron => neuron,
+        :wire => wire,
+        :text => text,
         :connectors => connectors
     )
 end
@@ -58,7 +58,7 @@ function renderneurontext(
         fxaa=true,
         font="Consolas",
         align=(:center, :center),
-        textsize=textsize,
+        fontsize=textsize,
         markerspace=:data
     )
 
@@ -74,7 +74,7 @@ function renderneurontext(
         fxaa=true,
         font="Consolas",
         align=(:center, :center),
-        textsize=activationsize,
+        fontsize=activationsize,
         markerspace=:data
     )
 end
@@ -83,13 +83,13 @@ function neuronposition(
     origin::Point3, n::Integer, neuronsize=Point3(1.0, 0.7, 0.1), gap=2.0
 )
     n == 0 && return Point3[], 0
-    
+
     points = Point3[origin]
     n == 1 && return points, 0
 
     distance = max(neuronsize[1], neuronsize[2]) + gap
     r = distance
-    
+
     currentposition = 2
     while currentposition <= n
         ltotal = circler2l(r)

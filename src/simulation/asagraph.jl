@@ -33,16 +33,16 @@ function renderasagraph!(
     elementcolorsdict = Dict(
         map(x -> Symbol(x[2].key) => elementcolors[x[1]], enumerate(orderedelements))
     )
-    
+
     elementgap = elementstep - elementsize[1]
     currentorigin = origin
-    
-    renderednodes = OrderedDict{Symbol, Any}()
-    renderedelements = SortedDict{Symbol, Any}()
-    origins = SortedDict{Int, Vector{Point}}()
+
+    renderednodes = OrderedDict{Symbol,Any}()
+    renderedelements = SortedDict{Symbol,Any}()
+    origins = SortedDict{Int,Vector{Point}}()
     _, nodesize = nodegeometry(origin, [origin], elementgap, elementsize)
     _, nodeheight, nodethick = nodesize
-    
+
     for (ilevel, (level, nodes)) in enumerate(reverse(collect(nodelevels)))
         origins[ilevel] = Vector()
         lastnodeposition = 0
@@ -50,18 +50,18 @@ function renderasagraph!(
             if ilevel == 1
                 currentorigin = Point(
                     currentorigin[1] + nodesize[1] + nodestep,
-                    currentorigin[2], 
+                    currentorigin[2],
                     currentorigin[3]
                 )
             else
                 lastnodeposition += 1
-                firstorigin = origins[ilevel - 1][lastnodeposition]
+                firstorigin = origins[ilevel-1][lastnodeposition]
                 lastnodeposition += node.size
-                lastorigin = origins[ilevel - 1][lastnodeposition]
+                lastorigin = origins[ilevel-1][lastnodeposition]
 
                 currentorigin = Point(
                     firstorigin[1] + (lastorigin[1] - firstorigin[1]) / 2,
-                    (ilevel - 1) * (nodeheight + 1.5nodestep), 
+                    (ilevel - 1) * (nodeheight + 1.5nodestep),
                     origin[3]
                 )
             end
@@ -74,7 +74,7 @@ function renderasagraph!(
             nodeorigin, nodesize = nodegeometry(
                 currentorigin, elementpoints, elementgap, elementsize
             )
-            
+
             renderednodes[Symbol("n$(level)p$inode")] = rendernode(
                 scene, nodeorigin, nodesize, nodecolors[level], elementgap;
                 transparent=false,
@@ -85,7 +85,7 @@ function renderasagraph!(
             for (ielement, pos) in enumerate(elementpoints)
                 elementcounter = elements[ielement].counter
                 renderedelements[Symbol(elements[ielement].key)] = renderelement(
-                    scene, pos, elementsize, 
+                    scene, pos, elementsize,
                     elementcolorsdict[Symbol(elements[ielement].key)], elementcounter;
                     text=string(elements[ielement].key), textcolor=elementtextcolor,
                     transparent=false,
@@ -99,8 +99,8 @@ function renderasagraph!(
     labelwidth = 0.5 + labeltextsize * elementsize[1] * length(labeltext)
     labelsize = Point(labelwidth, elementsize[2], nodethick)
     labelorigin = Point(
-        topnodegeomentry[:center][1] - labelsize[1] / 2, 
-        topnodegeomentry[:origin][2] + nodeheight + 2nodestep, 
+        topnodegeomentry[:center][1] - labelsize[1] / 2,
+        topnodegeomentry[:origin][2] + nodeheight + 2nodestep,
         topnodegeomentry[:origin][3]
     )
     label = renderlabel(
@@ -123,10 +123,10 @@ function renderasagraph!(
     firstnodegeometry = meshgeometry(firstnode[:node])
     lastnodegeometry = meshgeometry(lastnode[:node])
     Dict(
-        :nodes => renderednodes, 
-        :elements => renderedelements, 
-        :elementconnections => elementconnections, 
-        :nodeconnections => nodeconnections, 
+        :nodes => renderednodes,
+        :elements => renderedelements,
+        :elementconnections => elementconnections,
+        :nodeconnections => nodeconnections,
         :label => label,
         :origin => origin,
         :size => Point(
@@ -170,9 +170,9 @@ function renderelement(
         nothing
     end
     Dict(
-        :element => element, 
-        :wire => wire, 
-        :text => text, 
+        :element => element,
+        :wire => wire,
+        :text => text,
         :connectors => connectors
     )
 end
@@ -200,7 +200,7 @@ function renderlabel(
         fxaa=true,
         font="Consolas",
         align=(:center, :center),
-        textsize=textsize,
+        fontsize=textsize,
         markerspace=:data
     )
 
@@ -235,13 +235,13 @@ function renderelementconnectors(
     transparent=true, wire=true, boxwirecolor=RGBAf(0.2, 0.2, 0.2, 0.15)
 )
     size = Point(
-        scalefactor * elementsize[1], 
-        scalefactor * elementsize[2], 
+        scalefactor * elementsize[1],
+        scalefactor * elementsize[2],
         0.8 * elementsize[3]
     )
     sizereversed = Point(
-        scalefactor * elementsize[2], 
-        scalefactor * elementsize[1], 
+        scalefactor * elementsize[2],
+        scalefactor * elementsize[1],
         0.8 * elementsize[3]
     )
     originlleft = Point(
@@ -294,7 +294,7 @@ function renderelementtext(
         fxaa=true,
         font="Consolas",
         align=(:center, :center),
-        textsize=textsize,
+        fontsize=textsize,
         markerspace=:data
     )
 
@@ -310,7 +310,7 @@ function renderelementtext(
         fxaa=true,
         font="Consolas",
         align=(:center, :center),
-        textsize=countersize,
+        fontsize=countersize,
         markerspace=:data
     )
 end
@@ -330,14 +330,14 @@ function rendernodetext(
         fxaa=true,
         font="Consolas",
         align=(:center, :center),
-        textsize=textsize,
+        fontsize=textsize,
         markerspace=:data
     )
 end
 
 function elementpositions(n::Integer; stepfactor=0.85, origin=Point(0, 0, 0))
-    positions = Point{3, Float64}[]
-    for i in 0:1:(n - 1)
+    positions = Point{3,Float64}[]
+    for i in 0:1:(n-1)
         push!(positions, Point(i * stepfactor + origin[1], origin[2], origin[3]))
     end
     positions
@@ -345,14 +345,14 @@ end
 
 function nodegeometry(origin, elementpoints, elementgap, elementsize)
     nodeorigin = Point(
-        origin[1] - elementgap / 2, 
-        origin[2] - elementgap / 2, 
+        origin[1] - elementgap / 2,
+        origin[2] - elementgap / 2,
         origin[3] - elementsize[3] / 5
     )
 
     nodesize = Point(
         elementpoints[end][1] + elementsize[1] - elementpoints[1][1] + elementgap,
-        elementgap + elementsize[2] + elementsize[2] / 4, 
+        elementgap + elementsize[2] + elementsize[2] / 4,
         elementsize[3] / 5
     )
 
