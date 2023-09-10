@@ -74,13 +74,13 @@ end
 
 function graphsim(
     dffiles::Vector{String};
-    backgroundcolor=:black,
+    backgroundcolor=:white,
     resolution=(3700, 2000),
     camera3d=true, ssao=false,
     neuronsize=Point3(1.0, 0.7, 0.1), neurongap=2.0,
     neuroncolorstart=HSV(70, 0.38, 1), neuroncolorstop=HSV(-180, 0.38, 1),
     toggleheight=25, paddingcoeff=1.28,
-    connectorcolorstart=colorant"honeydew4", connectorcolorend=colorant"honeydew2",
+    connectorcolorstart=colorant"grey8", connectorcolorend=colorant"grey12",
     rowlimit::Int=0,
     sensorfilter::Set{Symbol}=Set{Symbol}()
 )

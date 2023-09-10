@@ -11,11 +11,11 @@ function renderasagraph!(
     scene, origin, asagraph;
     elementsize=Point(0.58, 0.7, 0.1), elementstep=0.92, nodestep=0.35,
     wirecolor=RGBAf(0.2, 0.2, 0.2, 0.15),
-    elementtextcolor=:grey8, nodetextcolor=:cornsilk2,
+    elementtextcolor=:white, nodetextcolor=:white,
     nodetextsize=0.15,
     elementwire=false, nodewire=false,
-    nodecolorstart=RGB(0.1, 0.1, 0.58), nodecolorend=RGB(0.05, 0.05, 0.38),
-    elementcolorstart=colorant"royalblue1", elementcolorend=colorant"lightblue1",
+    nodecolorstart=RGB(0.88, 0.88, 0.88), nodecolorend=RGB(0.83, 0.83, 0.83),
+    elementcolorstart=colorant"dodgerblue", elementcolorend=colorant"dodgerblue",
     connectorcolorstart=colorant"cornsilk4", connectorcolorend=colorant"cornsilk2",
     labelcolor=:sienna, labeltextcolor=:cornsilk2, labeltextsize=0.38
 )

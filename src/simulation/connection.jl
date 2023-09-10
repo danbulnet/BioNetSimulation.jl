@@ -91,7 +91,7 @@ function connectneuronelement!(
     colorstart=colorant"gray10", colorend=colorant"gray20",
     transparent=true,
     linewidth=0.38,
-    textcolor=:grey15, textsize=0.042
+    textcolor=:grey95, textsize=0.042
 )
     ncolors = 100
     colors = Colors.range(colorstart, stop=colorend, length=ncolors)
